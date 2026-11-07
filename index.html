@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Streamers Unity - commandes staff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  :root {
+    --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 12px; --cds-gap-lg: 16px; --cds-gap-xl: 24px;
+    --cds-pad-xs: 4px; --cds-pad-sm: 8px; --cds-pad-md: 12px; --cds-pad-lg: 16px; --cds-pad-xl: 24px;
+    --cds-radius: 8px; --cds-font-size-caption: 12px; --cds-font-size-body: 14px; --cds-font-size-heading: 16px; --cds-font-size-title: 28px;
+    --cds-font-weight-medium: 500; --cds-dur-slow: .3s; --cds-shadow-popover: 0 8px 24px rgba(0,0,0,.45);
+    --font-anthropic-sans: Poppins, "Segoe UI", system-ui, sans-serif; --font-anthropic-serif: Poppins, "Segoe UI", system-ui, sans-serif;
+  }
+  html, body { margin: 0; background: #0a0c11; }
+  body { padding: clamp(0px, 3vw, 32px); }
+  #dash-root { max-width: 1280px; margin: 0 auto; }
+  .dash-select { appearance: none; font: inherit; font-size: 13px; padding: 8px 32px 8px 12px; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a90a2' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; }
+  .dash-skeleton { color: transparent !important; background: #232734; border-radius: 6px; }
+  .su-site-foot { max-width: 1280px; margin: 16px auto 0; font: 12px Poppins, system-ui, sans-serif; color: #5b6172; text-align: center; }
+</style>
+<script>
+window.dash = (() => {
+  const store = {}, calcs = {}, draws = {}, cbs = [];
+  let params = { periode: '3 mois', metrique: 'revive' };
+  const files = { streamers: 'streamers.json', semaines: 'semaines.json', zones: 'zones_periodes.json', extraction: 'extraction.json' };
+  const api = {
+    colors: ['#e5484d', '#f59e0b', '#60a5fa'],
+    data(id) {
+      if (calcs[id]) {
+        if (calcs[id].out) return calcs[id].out;
+        const ins = calcs[id].inputs.map((i) => api.data(i));
+        if (ins.some((d) => d.status === 'error')) return { status: 'error', data: [] };
+        if (ins.some((d) => d.status !== 'ok')) return { status: 'loading', data: [] };
+        calcs[id].out = { status: 'ok', data: calcs[id].fn(...ins.map((d) => d.data)) };
+        return calcs[id].out;
+      }
+      return store[id] || { status: 'loading', data: [] };
+    },
+    calc(id, def) { calcs[id] = { inputs: def.inputs, fn: def.fn }; },
+    loader() {},
+    draw(name, fn) { if (fn) draws[name] = fn; run(name); },
+    onData(fn) { cbs.push(fn); try { fn(); } catch (e) { console.error(e); } },
+    params() { return params; },
+    setParams(p) { params = { ...params, ...p }; runAll(); },
+    resetParams() { params = { periode: '3 mois', metrique: 'revive' }; runAll(); },
+    refresh() {},
+    setLink() {},
+  };
+  function run(name) {
+    const fn = draws[name]; if (!fn) return;
+    document.querySelectorAll(`[data-draw="${name}"]`).forEach((el) => { try { fn(el); } catch (e) { console.error(name, e); } });
+  }
+  function runAll() {
+    cbs.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } });
+    Object.keys(draws).forEach(run);
+  }
+  window.addEventListener('DOMContentLoaded', async () => {
+    await Promise.all(Object.entries(files).map(async ([id, f]) => {
+      try {
+        const r = await fetch('data/' + f + '?v=' + Date.now(), { cache: 'no-store' });
+        const data = await r.json();
+        store[id] = { status: 'ok', data, columns: data.length ? Object.keys(data[0]) : [] };
+      } catch (e) { store[id] = { status: 'error', data: [], message: String(e) }; }
+    }));
+    Object.values(calcs).forEach((c) => { delete c.out; });
+    runAll();
+  });
+  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(runAll, 150); });
+  return api;
+})();
+</script>
+</head>
+<body>
+<div id="dash-root">
+<style>
+  #dash-root { --dash-gutter: 0; }
+  .su {
+    --color-fg: #e8eaf0; --color-fg-muted: #8a90a2; --color-panel: #181b24; --color-bg: #0f1117; --color-border-line: #2a2f3c;
+    --cds-chart-grid: #232734; --cds-chart-muted: #3a4050; --cds-surface-popover: #1f2330; --cds-border: #2a2f3c; --cds-text-secondary: #8a90a2;
+    --su-red: #e5484d; --su-amber: #f59e0b; --su-blue: #60a5fa;
+    display: flex; flex-direction: column; gap: var(--cds-gap-xl);
+    font-family: Poppins, "Segoe UI", system-ui, sans-serif; color: var(--color-fg);
+    background: #0f1117; border-top: 6px solid var(--su-red); border-radius: 14px; padding: clamp(16px, 4vw, 40px);
+  }
+  .su-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--cds-gap-md); }
+  .su-kicker { font-size: 11px; font-weight: 500; letter-spacing: .08em; color: var(--color-fg-muted); margin: 0 0 6px; }
+  .su-title { font-weight: 700; font-size: clamp(24px, 4vw, 34px); line-height: 1.15; margin: 0 0 8px; letter-spacing: -.01em; }
+  .su-badge { display: flex; flex-direction: column; gap: 2px; background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 10px; padding: 8px 14px; }
+  .su-badge small { font-size: 10px; letter-spacing: .06em; color: var(--color-fg-muted); }
+  .su-badge span { font-size: 13px; font-weight: 500; }
+  .su-right { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); align-items: flex-end; }
+  .su .dash-select, .su-search { background-color: var(--color-panel); color: var(--color-fg); border: 1px solid var(--color-border-line); border-radius: 8px; }
+  .su-lede { margin: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-body); max-width: 46rem; }
+  .su .su-lede b { color: var(--color-fg); font-weight: 700; }
+  .su .su-lede b.su-acc { color: var(--su-red); }
+  .su-ctrl { display: flex; align-items: center; gap: var(--cds-gap-sm); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .su-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); gap: var(--cds-gap-md); }
+  .su-tile, .su-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 14px; padding: 18px 20px; }
+  .su-tile { position: relative; }
+  .su-tile::before { content: ""; position: absolute; left: 20px; top: 19px; width: 4px; height: 13px; border-radius: 2px; background: var(--su-c, var(--su-red)); }
+  .su-tile .su-tlabel { padding-left: 12px; font-weight: 700; color: var(--color-fg); letter-spacing: .04em; text-transform: uppercase; font-size: 11px; }
+  .su-card h2 { position: relative; padding-left: 12px; }
+  .su-card h2::before { content: ""; position: absolute; left: 0; top: .25em; width: 4px; height: .95em; border-radius: 2px; background: var(--su-red); }
+  .su-tile { display: flex; flex-direction: column; gap: var(--cds-gap-xs); }
+  .su-tlabel { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .su-big { font-weight: 700; font-size: clamp(24px, 3vw, 30px); margin-top: 6px; font-variant-numeric: tabular-nums; line-height: 1.1; min-height: 1.1em; }
+  .su-sub { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+  .su-sub span { color: var(--color-fg); }
+  .su-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: var(--cds-gap-md); }
+  .su-card h2 { font-size: 16px; font-weight: 700; margin: 0; }
+  .su-note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: var(--cds-gap-xs) 0 var(--cds-gap-md); }
+  .su-cardhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--cds-gap-sm); }
+  .su-legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-bottom: var(--cds-gap-sm); }
+  .su-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .su-chart { position: relative; min-height: 260px; }
+  .su-chart.su-rank { min-height: 420px; }
+  .su-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; z-index: 2; }
+  .su-tip .d { color: var(--cds-text-secondary); margin-bottom: 2px; }
+  .su-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+  .su-tablebox { max-height: 34rem; overflow: auto; }
+  .su-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+  .su-table th { position: sticky; top: 0; background: var(--color-panel); text-transform: uppercase; font-size: 10.5px; letter-spacing: .04em; text-align: right; padding: 0; border-bottom: 1px solid var(--color-border-line); z-index: 1; }
+  .su-table th:first-child, .su-table td:first-child { text-align: left; }
+  .su-table th button { all: unset; cursor: pointer; display: block; padding: var(--cds-pad-xs) var(--cds-pad-sm); color: var(--color-fg-muted); font-weight: var(--cds-font-weight-medium); white-space: nowrap; }
+  .su-table th[aria-sort] button { color: var(--color-fg); }
+  .su-table td { padding: var(--cds-pad-xs) var(--cds-pad-sm); text-align: right; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+  .su-table td:first-child { font-weight: 500; }
+  .su-table tbody tr:hover td { background: #1f2330; }
+  .su-table td.z { color: var(--color-fg-muted); }
+  .su-search { font: inherit; font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); color: var(--color-fg); min-width: 12rem; }
+  .su-details { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+  .su-details { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 14px; padding: 16px 20px; }
+  .su-details summary { cursor: pointer; color: var(--color-fg); font-size: 15px; font-weight: 700; }
+  .su-details dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--cds-gap-xs) var(--cds-gap-md); margin: var(--cds-gap-md) 0 0; }
+  .su-details dt { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+  .su-details dd { margin: 0; }
+  .su-ems-open { font: inherit; font-size: 13px; font-weight: 700; color: #fff; background: var(--su-red); border: 0; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
+  .su-ems-open:hover { filter: brightness(1.1); }
+  .su-modal { position: fixed; inset: 0; z-index: 50; background: rgba(5, 6, 10, .72); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; overflow: auto; }
+  .su-modal[hidden] { display: none; }
+  .su-modal-box { width: min(100%, 44rem); background: #0f1117; border: 1px solid var(--color-border-line); border-top: 6px solid var(--su-red); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: var(--cds-gap-md); }
+  .su-modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--cds-gap-md); }
+  .su-modal-head h2 { font-size: 22px; font-weight: 700; margin: 0; }
+  .su-close { all: unset; cursor: pointer; font-size: 22px; line-height: 1; color: var(--color-fg-muted); padding: 2px 6px; border-radius: 6px; }
+  .su-close:hover { color: var(--color-fg); background: var(--color-panel); }
+  .su-ems-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--cds-gap-sm); }
+  .su-ems-tiles .su-big { color: var(--su-red); }
+  .su-ems-tiles .su-big::after { content: " $"; font-size: .6em; color: var(--su-amber); }
+  .su-ems-table td.m { color: var(--su-red); font-weight: 700; }
+  [data-dash-source-state=empty] { color: transparent; }
+  [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+  .su-fail { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: inherit; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+  .su-fail::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
+  @media (max-width: 640px) { .su-hide-sm { display: none; } }
+</style>
+
+<div class="su" lang="fr">
+  <header class="su-head" id="haut">
+    <div>
+      <p class="su-kicker">UNITY RP  ·  STAFF PANEL  ·  RAPPORT</p>
+      <h1 class="su-title">Streamers Unity - commandes staff</h1>
+      <p class="su-lede">Sur <span data-draw="perphrase">—</span>, <b data-draw="top" data-source="top" data-field="pseudo" data-where="periode=3 mois" class="dash-skeleton">—</b> est le streamer qui a fait le plus de /revive (<b data-draw="top" data-source="top" data-field="revive" data-where="periode=3 mois" class="dash-skeleton su-acc">—</b>), parmi les streamers partenaires.</p>
+    </div>
+    <div class="su-right">
+    <button type="button" class="su-ems-open">Perte des EMS</button>
+    <div class="su-badge"><small>MIS À JOUR LE</small><span data-draw="extrait" data-source="extraction" data-field="extrait_texte">—</span></div>
+    <label class="su-ctrl">Période
+      <select class="dash-select su-periode" aria-label="Période">
+        <option value="3 mois">3 mois</option>
+        <option value="30 jours">30 jours</option>
+        <option value="7 jours">7 jours</option>
+      </select>
+    </label>
+    </div>
+  </header>
+
+  <section class="su-tiles" id="totaux">
+    <div class="su-tile" style="--su-c: var(--su-red)"><span class="su-tlabel">/revive · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="revive" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="revive_jour" data-where="periode=3 mois">—</span> par jour</span></div>
+    <div class="su-tile" style="--su-c: var(--su-amber)"><span class="su-tlabel">/revivezone · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="revivezone" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="revivezone_jour" data-where="periode=3 mois">—</span> par jour</span></div>
+    <div class="su-tile" style="--su-c: var(--su-blue)"><span class="su-tlabel">Spawn véhicule · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="spawn" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="spawn_jour" data-where="periode=3 mois">—</span> par jour</span></div>
+    <div class="su-tile" style="--su-c: var(--su-red)"><span class="su-tlabel">/heal · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="heal" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="heal_jour" data-where="periode=3 mois">—</span> par jour</span></div>
+    <div class="su-tile" style="--su-c: var(--su-amber)"><span class="su-tlabel">/repairveh · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="repairveh" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="repairveh_jour" data-where="periode=3 mois">—</span> par jour</span></div>
+    <div class="su-tile" style="--su-c: var(--su-blue)"><span class="su-tlabel">Téléportations · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="tp" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="tp_jour" data-where="periode=3 mois">—</span> par jour</span></div>
+  </section>
+
+  <section class="su-card" id="evolution">
+    <h2>Évolution par semaine</h2>
+    <p class="su-note">Total des streamers, par semaine (du lundi), pour les semaines qui touchent <span data-draw="perphrase">—</span>. La dernière semaine est en cours.</p>
+    <div class="su-legend"><span><i class="su-sw" data-i="0"></i>/revive</span><span><i class="su-sw" data-i="1"></i>/revivezone</span><span><i class="su-sw" data-i="2"></i>Spawn véhicule</span></div>
+    <div class="su-chart" data-draw="weekly" data-source="semaines extraction"></div>
+  </section>
+
+  <div class="su-grid">
+    <section class="su-card" id="classement">
+      <div class="su-cardhead">
+        <div>
+          <h2>Classement des streamers</h2>
+          <p class="su-note">Top 15 sur la période choisie en haut.</p>
+        </div>
+        <select class="dash-select su-metrique" aria-label="Commande">
+          <option value="revive">/revive</option>
+          <option value="revivezone">/revivezone</option>
+          <option value="spawn">Spawn véhicule</option>
+          <option value="heal">/heal</option>
+          <option value="repairveh">/repairveh</option>
+          <option value="dve">Suppression véhicule (/dve)</option>
+          <option value="noclip">/noclip</option>
+          <option value="tp">Téléportations</option>
+        </select>
+      </div>
+      <div class="su-chart su-rank" data-draw="rank" data-source="streamers"></div>
+    </section>
+
+    <section class="su-card" id="rayons">
+      <h2>/revivezone par rayon</h2>
+      <p class="su-note">Tous les streamers, sur <span data-draw="perphrase">—</span>. Le rayon est le chiffre tapé après /revivezone.</p>
+      <div class="su-chart" data-draw="zones" data-source="zones"></div>
+    </section>
+  </div>
+
+  <section class="su-card" id="detail">
+    <div class="su-cardhead">
+      <div>
+        <h2>Détail par streamer</h2>
+        <p class="su-note">Tous les streamers partenaires, sur la période choisie en haut. Clique sur une colonne pour trier.</p>
+      </div>
+      <input class="su-search" type="search" placeholder="Rechercher un streamer" aria-label="Rechercher un streamer">
+    </div>
+    <div class="su-tablebox">
+      <table class="su-table" data-source="streamers" data-row-key="pseudo,periode">
+        <thead><tr>
+          <th data-field="pseudo"><button type="button" data-k="pseudo">Streamer</button></th>
+          <th data-field="revive"><button type="button" data-k="revive">/revive</button></th>
+          <th data-field="revivezone"><button type="button" data-k="revivezone">/revivezone</button></th>
+          <th data-field="spawn"><button type="button" data-k="spawn">Spawn véh.</button></th>
+          <th data-field="heal"><button type="button" data-k="heal">/heal</button></th>
+          <th data-field="repairveh"><button type="button" data-k="repairveh">/repairveh</button></th>
+          <th data-field="dve" class="su-hide-sm"><button type="button" data-k="dve">/dve</button></th>
+          <th data-field="noclip" class="su-hide-sm"><button type="button" data-k="noclip">/noclip</button></th>
+          <th data-field="tp" class="su-hide-sm"><button type="button" data-k="tp">TP</button></th>
+          <th data-field="kick" class="su-hide-sm"><button type="button" data-k="kick">/kick</button></th>
+        </tr></thead>
+        <tbody data-draw="table"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="su-modal" id="perte-ems" hidden role="dialog" aria-modal="true" aria-labelledby="su-ems-title">
+    <div class="su-modal-box">
+      <div class="su-modal-head">
+        <div>
+          <p class="su-kicker">UNITY RP  ·  STAFF PANEL</p>
+          <h2 id="su-ems-title">Perte des EMS</h2>
+        </div>
+        <button type="button" class="su-close" aria-label="Fermer">×</button>
+      </div>
+      <p class="su-note">Chaque /revive fait par un streamer est un revive que les EMS n'ont pas facturé, compté à 3 500 $. Les /revivezone ne sont pas comptées.</p>
+      <div class="su-ems-tiles">
+        <div class="su-tile" style="--su-c: var(--su-red)"><span class="su-tlabel">3 mois</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=3 mois">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=3 mois">—</span> revives</span></div>
+        <div class="su-tile" style="--su-c: var(--su-amber)"><span class="su-tlabel">30 jours</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=30 jours">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=30 jours">—</span> revives</span></div>
+        <div class="su-tile" style="--su-c: var(--su-blue)"><span class="su-tlabel">7 jours</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=7 jours">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=7 jours">—</span> revives</span></div>
+      </div>
+      <p class="su-note">Par streamer, sur la période choisie en haut du tableau de bord.</p>
+      <div class="su-tablebox">
+        <table class="su-table su-ems-table" data-source="pertes" data-row-key="pseudo,periode">
+          <thead><tr>
+            <th data-field="pseudo"><button type="button" tabindex="-1">Streamer</button></th>
+            <th data-field="revive"><button type="button" tabindex="-1">/revive</button></th>
+            <th data-field="perte"><button type="button" tabindex="-1">Perte EMS</button></th>
+          </tr></thead>
+          <tbody data-draw="ems-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  d3.formatDefaultLocale({ decimal: ',', thousands: ' ', grouping: [3], currency: ['', ' €'] });
+  window.suFmt = d3.format(',');
+  window.suPal = ['#e5484d', '#f59e0b', '#60a5fa'];
+  window.suCats = ['revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'giveveh', 'kick', 'unban'];
+  window.suNames = { revive: '/revive', revivezone: '/revivezone', spawn: 'Spawn véhicule', heal: '/heal', repairveh: '/repairveh', dve: '/dve', noclip: '/noclip', tp: 'Téléportations', giveveh: '/giveveh', kick: '/kick' };
+  window.suSort = { k: 'revive', dir: -1 };
+  window.suQuery = '';
+
+  dash.calc('totaux', {
+    title: 'Totaux par période',
+    description: 'Somme des commandes des streamers pour chaque période, et la moyenne par jour sur les jours couverts par les logs.',
+    inputs: ['streamers', 'extraction'],
+    fn: (streamers, extraction) => {
+      const cats = ['revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'giveveh', 'kick', 'unban'];
+      const jours = { '3 mois': Number(extraction[0]?.jours_3_mois) || 92, '30 jours': 30, '7 jours': 7 };
+      const out = {};
+      for (const r of streamers) {
+        const o = out[r.periode] || (out[r.periode] = { periode: r.periode });
+        for (const c of cats) o[c] = (o[c] || 0) + Number(r[c]);
+      }
+      for (const o of Object.values(out)) for (const c of cats) o[c + '_jour'] = Math.round(o[c] / jours[o.periode]);
+      return Object.values(out);
+    },
+  });
+
+  dash.calc('top', {
+    title: 'Streamer avec le plus de /revive',
+    description: 'Pour chaque période, le streamer qui a fait le plus de /revive.',
+    inputs: ['streamers'],
+    fn: (streamers) => {
+      const out = {};
+      for (const r of streamers) {
+        const v = Number(r.revive);
+        if (!out[r.periode] || v > out[r.periode].revive) out[r.periode] = { periode: r.periode, pseudo: r.pseudo, revive: v };
+      }
+      return Object.values(out);
+    },
+  });
+
+  dash.calc('pertes', {
+    title: 'Perte des EMS par streamer',
+    description: 'Nombre de /revive de chaque streamer multiplié par 3 500 $, pour chaque période.',
+    inputs: ['streamers'],
+    fn: (streamers) => streamers.map((r) => ({ pseudo: r.pseudo, periode: r.periode, revive: Number(r.revive), perte: Number(r.revive) * 3500 })),
+  });
+
+  dash.calc('pertes_totaux', {
+    title: 'Perte des EMS, total',
+    description: 'Total des /revive des 40 streamers multiplié par 3 500 $, pour chaque période.',
+    inputs: ['pertes'],
+    fn: (pertes) => {
+      const out = {};
+      for (const r of pertes) {
+        const o = out[r.periode] || (out[r.periode] = { periode: r.periode, revive: 0, perte: 0 });
+        o.revive += r.revive; o.perte += r.perte;
+      }
+      return Object.values(out);
+    },
+  });
+
+  function suFail(el, st) {
+    if (st === 'error' || st === 'connect' || st === 'declined') {
+      const d = document.createElement('div');
+      d.className = 'su-fail';
+      d.textContent = 'Échec du chargement';
+      el.replaceChildren(d);
+      return true;
+    }
+    return false;
+  }
+  window.suFail = suFail;
+
+  document.querySelectorAll('.su-sw').forEach((s) => { s.style.background = window.suPal[Number(s.dataset.i)]; });
+
+  document.querySelectorAll('.su-periode').forEach((sel) => {
+    sel.addEventListener('change', () => dash.setParams({ periode: sel.value }));
+  });
+  document.querySelectorAll('.su-metrique').forEach((sel) => {
+    sel.addEventListener('change', () => dash.setParams({ metrique: sel.value }));
+  });
+  document.querySelectorAll('.su-search').forEach((inp) => {
+    inp.addEventListener('input', () => { window.suQuery = inp.value.trim().toLowerCase(); dash.draw('table'); });
+  });
+  document.querySelectorAll('.su-table th button').forEach((b) => {
+    b.addEventListener('click', () => {
+      const k = b.dataset.k;
+      if (window.suSort.k === k) window.suSort.dir *= -1;
+      else window.suSort = { k, dir: k === 'pseudo' ? 1 : -1 };
+      document.querySelectorAll('.su-table th').forEach((th) => {
+        if (th.querySelector('button')?.dataset.k === window.suSort.k) th.setAttribute('aria-sort', window.suSort.dir > 0 ? 'ascending' : 'descending');
+        else th.removeAttribute('aria-sort');
+      });
+      dash.draw('table');
+    });
+  });
+
+  const suModal = () => document.querySelectorAll('.su-modal');
+  document.querySelectorAll('.su-ems-open').forEach((b) => b.addEventListener('click', () => suModal().forEach((m) => { m.hidden = false; })));
+  document.querySelectorAll('.su-close').forEach((b) => b.addEventListener('click', () => suModal().forEach((m) => { m.hidden = true; })));
+  suModal().forEach((m) => m.addEventListener('click', (e) => { if (e.target === m) m.hidden = true; }));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') suModal().forEach((m) => { m.hidden = true; }); });
+
+  dash.onData(() => {
+    const p = dash.params();
+    document.querySelectorAll('.su-periode').forEach((s) => { s.value = p.periode || '3 mois'; });
+    document.querySelectorAll('.su-metrique').forEach((s) => { s.value = p.metrique || 'revive'; });
+    document.querySelectorAll('.su-table th').forEach((th) => {
+      const k = th.querySelector('button')?.dataset.k;
+      if (k === window.suSort.k) th.setAttribute('aria-sort', window.suSort.dir > 0 ? 'ascending' : 'descending');
+      else th.removeAttribute('aria-sort');
+    });
+  });
+</script>
+
+<script>
+  window.suPer = () => dash.params().periode || '3 mois';
+  window.suPhrase = { '3 mois': 'les 3 derniers mois', '30 jours': 'les 30 derniers jours', '7 jours': 'les 7 derniers jours' };
+
+  dash.draw('extrait', (el) => {
+    const d = dash.data('extraction');
+    el.textContent = d.status === 'ok' && d.data[0] ? d.data[0].extrait_texte : '—';
+  });
+
+  dash.draw('per', (el) => { el.textContent = window.suPer(); });
+  dash.draw('perphrase', (el) => { el.textContent = window.suPhrase[window.suPer()]; });
+
+  dash.draw('top', (el) => {
+    const per = window.suPer();
+    el.dataset.where = 'periode=' + per;
+    const d = dash.data('top');
+    if (d.status !== 'ok') { el.textContent = '—'; if (d.status !== 'loading') el.classList.remove('dash-skeleton'); return; }
+    el.classList.remove('dash-skeleton');
+    const row = d.data.find((r) => r.periode === per);
+    const v = row ? row[el.dataset.field] : '—';
+    el.textContent = typeof v === 'number' ? window.suFmt(v) : v;
+  });
+
+  dash.draw('ems-tot', (el) => {
+    const d = dash.data('pertes_totaux');
+    if (d.status !== 'ok') { el.textContent = '—'; return; }
+    const per = new URLSearchParams(el.dataset.where).get('periode');
+    const row = d.data.find((r) => r.periode === per);
+    el.textContent = row ? window.suFmt(row[el.dataset.field]) : '—';
+  });
+
+  dash.draw('ems-table', (tb) => {
+    const d = dash.data('pertes');
+    if (d.status !== 'ok') { tb.replaceChildren(); return; }
+    const per = dash.params().periode || '3 mois';
+    const rows = d.data.filter((r) => r.periode === per && r.revive > 0).sort((a, b) => b.perte - a.perte);
+    tb.replaceChildren(...rows.map((r) => {
+      const tr = document.createElement('tr');
+      tr.dataset.key = encodeURIComponent(r.pseudo) + ',' + encodeURIComponent(r.periode);
+      const a = document.createElement('td'); a.textContent = r.pseudo;
+      const b = document.createElement('td'); b.textContent = window.suFmt(r.revive);
+      const c = document.createElement('td'); c.className = 'm'; c.textContent = window.suFmt(r.perte) + ' $';
+      tr.append(a, b, c);
+      return tr;
+    }));
+  });
+
+  dash.draw('tot', (el) => {
+    const per = window.suPer();
+    el.dataset.where = 'periode=' + per;
+    const d = dash.data('totaux');
+    if (d.status !== 'ok') { el.textContent = '—'; if (d.status !== 'loading') el.classList.remove('dash-skeleton'); return; }
+    el.classList.remove('dash-skeleton');
+    const row = d.data.find((r) => r.periode === per);
+    el.textContent = row ? window.suFmt(row[el.dataset.field]) : '—';
+  });
+</script>
+
+<script>
+  function suTip(box) {
+    let tip = box.querySelector('.su-tip');
+    if (!tip) { tip = document.createElement('div'); tip.className = 'su-tip'; box.appendChild(tip); }
+    tip.style.display = 'none';
+    return {
+      show(x, y, title, lines) {
+        tip.replaceChildren();
+        const t = document.createElement('div'); t.className = 'd'; t.textContent = title; tip.appendChild(t);
+        for (const [color, name, val] of lines) {
+          const l = document.createElement('div');
+          if (color) { const i = document.createElement('i'); i.style.background = color; l.appendChild(i); }
+          l.appendChild(document.createTextNode(name + ' : ' + val));
+          tip.appendChild(l);
+        }
+        tip.style.display = 'block';
+        const bw = box.clientWidth, tw = tip.offsetWidth, th = tip.offsetHeight;
+        let left = x + 12; if (left + tw > bw) left = x - tw - 12; if (left < 0) left = 0;
+        let top = y - th - 8; if (top < 0) top = y + 12;
+        tip.style.left = left + 'px'; tip.style.top = top + 'px';
+      },
+      hide() { tip.style.display = 'none'; },
+    };
+  }
+  window.suTip = suTip;
+
+  dash.draw('weekly', (el) => {
+    const d = dash.data('semaines');
+    if (suFail(el, d.status)) return;
+    if (d.status !== 'ok') { el.replaceChildren(); return; }
+    const days = { '3 mois': 0, '30 jours': 30, '7 jours': 7 }[window.suPer()];
+    const ex = dash.data('extraction');
+    const fin = ex.status === 'ok' && ex.data[0] ? Date.parse(ex.data[0].extrait_le) : Date.now();
+    const rows = d.data.map((r) => ({ ...r, date: new Date(r.semaine + 'T00:00:00Z') }))
+      .filter((r) => !days || r.date.getTime() + 7 * 864e5 > fin - days * 864e5);
+    const keys = ['revive', 'revivezone', 'spawn'];
+    const W = Math.max(el.clientWidth, 280), H = 260;
+    const ymax = d3.max(rows, (r) => d3.max(keys, (k) => Number(r[k])));
+    const y = d3.scaleLinear([0, ymax], [H - 26, 10]).nice();
+    el.replaceChildren();
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
+    const yAxis = svg.append('g').attr('font-size', null).attr('font-family', null).call(d3.axisLeft(y).ticks(5).tickSize(0).tickFormat(window.suFmt));
+    yAxis.select('.domain').remove();
+    yAxis.selectAll('text').attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)');
+    let lw = 0; yAxis.selectAll('text').each(function () { lw = Math.max(lw, this.getComputedTextLength()); });
+    const ml = lw + 10, mr = 12;
+    yAxis.attr('transform', `translate(${ml - 6},0)`);
+    const x = d3.scaleBand(rows.map((r) => r.semaine), [ml, W - mr]).padding(0.2);
+    svg.insert('g', ':first-child').selectAll('line').data(y.ticks(5)).join('line')
+      .attr('x1', ml).attr('x2', W - mr).attr('y1', (v) => y(v)).attr('y2', (v) => y(v))
+      .attr('stroke', 'var(--cds-chart-grid)').attr('stroke-width', 1);
+    const xs = x.bandwidth() / keys.length;
+    const fmtD = d3.utcFormat('%d/%m');
+    const every = Math.ceil(rows.length / Math.max(1, Math.floor((W - ml) / 52)));
+    svg.append('g').selectAll('text').data(rows.filter((_, i) => i % every === 0)).join('text')
+      .attr('x', (r) => x(r.semaine) + x.bandwidth() / 2).attr('y', H - 8).attr('text-anchor', 'middle')
+      .attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)').text((r) => fmtD(r.date));
+    const g = svg.append('g').selectAll('g').data(rows).join('g').attr('transform', (r) => `translate(${x(r.semaine)},0)`);
+    keys.forEach((k, i) => {
+      g.append('rect').attr('x', i * xs + 1).attr('width', Math.max(1, Math.min(xs - 2, 32)))
+        .attr('y', (r) => y(Number(r[k]))).attr('height', (r) => Math.max(0, y(0) - y(Number(r[k]))))
+        .attr('rx', 2).attr('fill', window.suPal[i]);
+    });
+    const tip = suTip(el);
+    svg.append('g').selectAll('rect').data(rows).join('rect')
+      .attr('x', (r) => x(r.semaine) - x.step() * x.paddingInner() / 2).attr('width', x.step()).attr('y', 0).attr('height', H - 26)
+      .attr('fill', 'transparent')
+      .on('mousemove', (ev, r) => {
+        const [mx, my] = d3.pointer(ev, el);
+        tip.show(mx, my, 'Semaine du ' + fmtD(r.date), keys.map((k, i) => [window.suPal[i], window.suNames[k], window.suFmt(r[k])]));
+      })
+      .on('mouseleave', () => tip.hide());
+  });
+
+  dash.draw('rank', (el) => {
+    const d = dash.data('streamers');
+    if (suFail(el, d.status)) return;
+    if (d.status !== 'ok') { el.replaceChildren(); return; }
+    const p = dash.params();
+    const per = p.periode || '3 mois', m = p.metrique || 'revive';
+    const rows = d.data.filter((r) => r.periode === per).map((r) => ({ ...r, v: Number(r[m]) }))
+      .sort((a, b) => b.v - a.v).slice(0, 15);
+    const W = Math.max(el.clientWidth, 280), bh = 18, gap = 9, H = rows.length * (bh + gap) + 6;
+    el.replaceChildren();
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
+    const labels = svg.append('g').selectAll('text').data(rows).join('text')
+      .attr('y', (r, i) => i * (bh + gap) + bh / 2 + 4).attr('fill', 'var(--color-fg)')
+      .style('font-size', 'var(--cds-font-size-caption)').text((r) => r.pseudo);
+    let lw = 0; labels.each(function () { lw = Math.max(lw, this.getComputedTextLength()); });
+    lw = Math.min(lw, W * 0.4);
+    const vals = svg.append('g').selectAll('text').data(rows).join('text')
+      .style('font-size', 'var(--cds-font-size-caption)').style('font-variant-numeric', 'tabular-nums')
+      .attr('fill', 'var(--color-fg-muted)').text((r) => window.suFmt(r.v));
+    let vw = 0; vals.each(function () { vw = Math.max(vw, this.getComputedTextLength()); });
+    const x0 = lw + 10, x1 = W - vw - 8;
+    const x = d3.scaleLinear([0, d3.max(rows, (r) => r.v) || 1], [x0, x1]);
+    labels.attr('x', 0);
+    svg.append('g').selectAll('rect').data(rows).join('rect')
+      .attr('x', x0).attr('y', (r, i) => i * (bh + gap)).attr('height', bh).attr('rx', 3)
+      .attr('width', (r) => Math.max(0, x(r.v) - x0))
+      .attr('fill', (r, i) => (i === 0 ? window.suPal[0] : i < 3 ? window.suPal[1] : 'var(--cds-chart-muted)'));
+    vals.attr('x', (r) => x(r.v) + 6).attr('y', (r, i) => i * (bh + gap) + bh / 2 + 4);
+    if (!rows.some((r) => r.v > 0)) {
+      el.replaceChildren();
+      const n = document.createElement('div'); n.className = 'su-fail'; n.textContent = 'Aucune commande sur cette période';
+      el.appendChild(n);
+    }
+  });
+
+  dash.draw('zones', (el) => {
+    const d = dash.data('zones');
+    if (suFail(el, d.status)) return;
+    if (d.status !== 'ok') { el.replaceChildren(); return; }
+    const per = window.suPer();
+    const rows = d.data.filter((r) => r.periode === per).sort((a, b) => Number(a.ordre) - Number(b.ordre)).map((r) => ({ ...r, v: Number(r.nombre) }));
+    const W = Math.max(el.clientWidth, 280), H = 260, mb = 40;
+    el.replaceChildren();
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
+    const x = d3.scaleBand(rows.map((r) => r.rayon), [4, W - 4]).padding(0.25);
+    const y = d3.scaleLinear([0, d3.max(rows, (r) => r.v) || 1], [H - mb, 22]);
+    const top = d3.max(rows, (r) => r.v);
+    svg.append('g').selectAll('rect').data(rows).join('rect')
+      .attr('x', (r) => x(r.rayon) + Math.max(0, (x.bandwidth() - 32) / 2)).attr('width', Math.min(32, x.bandwidth()))
+      .attr('y', (r) => y(r.v)).attr('height', (r) => y(0) - y(r.v)).attr('rx', 3)
+      .attr('fill', (r) => (r.v === top ? window.suPal[1] : 'var(--cds-chart-muted)'));
+    svg.append('g').selectAll('text').data(rows).join('text')
+      .attr('x', (r) => x(r.rayon) + x.bandwidth() / 2).attr('y', (r) => y(r.v) - 6).attr('text-anchor', 'middle')
+      .style('font-size', 'var(--cds-font-size-caption)').style('font-variant-numeric', 'tabular-nums').attr('fill', 'var(--color-fg)')
+      .text((r) => window.suFmt(r.v));
+    const lab = svg.append('g').selectAll('text').data(rows).join('text')
+      .attr('x', (r) => x(r.rayon) + x.bandwidth() / 2).attr('y', H - mb + 16).attr('text-anchor', 'middle')
+      .style('font-size', 'var(--cds-font-size-caption)').attr('fill', 'var(--color-fg-muted)')
+      .text((r) => (r.rayon.startsWith('Autre') ? 'Autre' : r.rayon));
+    let tooWide = false; lab.each(function () { if (this.getComputedTextLength() > x.step() - 2) tooWide = true; });
+    if (tooWide) lab.attr('transform', function () { return `rotate(-35 ${this.getAttribute('x')} ${this.getAttribute('y')})`; }).attr('text-anchor', 'end');
+  });
+
+  dash.draw('table', (tb) => {
+    const d = dash.data('streamers');
+    if (d.status !== 'ok') { tb.replaceChildren(); return; }
+    const per = dash.params().periode || '3 mois';
+    const cols = ['pseudo', 'revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'kick'];
+    const hide = new Set(['dve', 'noclip', 'tp', 'kick']);
+    const { k, dir } = window.suSort;
+    const q = window.suQuery;
+    const rows = d.data.filter((r) => r.periode === per && (!q || (r.pseudo + ' ' + r.compte).toLowerCase().includes(q)))
+      .sort((a, b) => (k === 'pseudo' ? dir * String(a.pseudo).localeCompare(String(b.pseudo), 'fr') : dir * (Number(a[k]) - Number(b[k]))));
+    tb.replaceChildren(...rows.map((r) => {
+      const tr = document.createElement('tr');
+      tr.dataset.key = encodeURIComponent(r.pseudo) + ',' + encodeURIComponent(r.periode);
+      for (const c of cols) {
+        const td = document.createElement('td');
+        if (c === 'pseudo') td.textContent = r.pseudo;
+        else { const v = Number(r[c]); td.textContent = window.suFmt(v); if (!v) td.className = 'z'; }
+        if (hide.has(c)) td.classList.add('su-hide-sm');
+        tr.appendChild(td);
+      }
+      return tr;
+    }));
+  });
+</script>
+
+</div>
+<p class="su-site-foot">Unity RP - Rapport staff · données des logs du panel staff, mises à jour automatiquement</p>
+</body>
+</html>
