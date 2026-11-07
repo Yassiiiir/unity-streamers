@@ -260,11 +260,11 @@ window.dash = (() => {
         </div>
         <button type="button" class="su-close" aria-label="Fermer">×</button>
       </div>
-      <p class="su-note">Chaque /revive fait par un streamer est un revive que les EMS n'ont pas facturé, compté à 3 500 $. Les /revivezone ne sont pas comptées.</p>
+      <p class="su-note">Chaque /revive fait par un streamer est un revive que les EMS n'ont pas facturé (3 500 $), et chaque /heal un soin non facturé (1 200 $). Les /revivezone ne sont pas comptées.</p>
       <div class="su-ems-tiles">
-        <div class="su-tile" style="--su-c: var(--su-red)"><span class="su-tlabel">3 mois</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=3 mois">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=3 mois">—</span> revives</span></div>
-        <div class="su-tile" style="--su-c: var(--su-amber)"><span class="su-tlabel">30 jours</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=30 jours">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=30 jours">—</span> revives</span></div>
-        <div class="su-tile" style="--su-c: var(--su-blue)"><span class="su-tlabel">7 jours</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=7 jours">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=7 jours">—</span> revives</span></div>
+        <div class="su-tile" style="--su-c: var(--su-red)"><span class="su-tlabel">3 mois</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=3 mois">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=3 mois">—</span> revives · <span data-draw="ems-tot" data-source="pertes_totaux" data-field="heal" data-where="periode=3 mois">—</span> soins</span></div>
+        <div class="su-tile" style="--su-c: var(--su-amber)"><span class="su-tlabel">30 jours</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=30 jours">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=30 jours">—</span> revives · <span data-draw="ems-tot" data-source="pertes_totaux" data-field="heal" data-where="periode=30 jours">—</span> soins</span></div>
+        <div class="su-tile" style="--su-c: var(--su-blue)"><span class="su-tlabel">7 jours</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=7 jours">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=7 jours">—</span> revives · <span data-draw="ems-tot" data-source="pertes_totaux" data-field="heal" data-where="periode=7 jours">—</span> soins</span></div>
       </div>
       <p class="su-note">Par streamer, sur la période choisie en haut du tableau de bord.</p>
       <div class="su-tablebox">
@@ -272,6 +272,7 @@ window.dash = (() => {
           <thead><tr>
             <th data-field="pseudo"><button type="button" tabindex="-1">Streamer</button></th>
             <th data-field="revive"><button type="button" tabindex="-1">/revive</button></th>
+            <th data-field="heal"><button type="button" tabindex="-1">/heal</button></th>
             <th data-field="perte"><button type="button" tabindex="-1">Perte EMS</button></th>
           </tr></thead>
           <tbody data-draw="ems-table"></tbody>
@@ -324,20 +325,20 @@ window.dash = (() => {
 
   dash.calc('pertes', {
     title: 'Perte des EMS par streamer',
-    description: 'Nombre de /revive de chaque streamer multiplié par 3 500 $, pour chaque période.',
+    description: 'Pour chaque streamer et chaque période : /revive × 3 500 $ + /heal × 1 200 $.',
     inputs: ['streamers'],
-    fn: (streamers) => streamers.map((r) => ({ pseudo: r.pseudo, periode: r.periode, revive: Number(r.revive), perte: Number(r.revive) * 3500 })),
+    fn: (streamers) => streamers.map((r) => ({ pseudo: r.pseudo, periode: r.periode, revive: Number(r.revive), heal: Number(r.heal), perte: Number(r.revive) * 3500 + Number(r.heal) * 1200 })),
   });
 
   dash.calc('pertes_totaux', {
     title: 'Perte des EMS, total',
-    description: 'Total des /revive des 40 streamers multiplié par 3 500 $, pour chaque période.',
+    description: 'Total pour chaque période : /revive × 3 500 $ + /heal × 1 200 $.',
     inputs: ['pertes'],
     fn: (pertes) => {
       const out = {};
       for (const r of pertes) {
-        const o = out[r.periode] || (out[r.periode] = { periode: r.periode, revive: 0, perte: 0 });
-        o.revive += r.revive; o.perte += r.perte;
+        const o = out[r.periode] || (out[r.periode] = { periode: r.periode, revive: 0, heal: 0, perte: 0 });
+        o.revive += r.revive; o.heal += r.heal; o.perte += r.perte;
       }
       return Object.values(out);
     },
@@ -432,14 +433,15 @@ window.dash = (() => {
     const d = dash.data('pertes');
     if (d.status !== 'ok') { tb.replaceChildren(); return; }
     const per = dash.params().periode || '3 mois';
-    const rows = d.data.filter((r) => r.periode === per && r.revive > 0).sort((a, b) => b.perte - a.perte);
+    const rows = d.data.filter((r) => r.periode === per && r.perte > 0).sort((a, b) => b.perte - a.perte);
     tb.replaceChildren(...rows.map((r) => {
       const tr = document.createElement('tr');
       tr.dataset.key = encodeURIComponent(r.pseudo) + ',' + encodeURIComponent(r.periode);
       const a = document.createElement('td'); a.textContent = r.pseudo;
       const b = document.createElement('td'); b.textContent = window.suFmt(r.revive);
+      const h = document.createElement('td'); h.textContent = window.suFmt(r.heal);
       const c = document.createElement('td'); c.className = 'm'; c.textContent = window.suFmt(r.perte) + ' $';
-      tr.append(a, b, c);
+      tr.append(a, b, h, c);
       return tr;
     }));
   });
