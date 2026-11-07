@@ -30,7 +30,7 @@ window.dash = (() => {
   let params = { periode: '3 mois', metrique: 'revive' };
   const files = { streamers: 'streamers.json', semaines: 'semaines.json', zones: 'zones_periodes.json', extraction: 'extraction.json' };
   const api = {
-    colors: ['#e5484d', '#f59e0b', '#60a5fa'],
+    colors: ['#a855f7', '#f59e0b', '#60a5fa'],
     data(id) {
       if (calcs[id]) {
         if (calcs[id].out) return calcs[id].out;
@@ -83,7 +83,7 @@ window.dash = (() => {
   .su {
     --color-fg: #e8eaf0; --color-fg-muted: #8a90a2; --color-panel: #181b24; --color-bg: #0f1117; --color-border-line: #2a2f3c;
     --cds-chart-grid: #232734; --cds-chart-muted: #3a4050; --cds-surface-popover: #1f2330; --cds-border: #2a2f3c; --cds-text-secondary: #8a90a2;
-    --su-red: #e5484d; --su-amber: #f59e0b; --su-blue: #60a5fa;
+    --su-red: #a855f7; --su-amber: #f59e0b; --su-blue: #60a5fa;
     display: flex; flex-direction: column; gap: var(--cds-gap-xl);
     font-family: Poppins, "Segoe UI", system-ui, sans-serif; color: var(--color-fg);
     background: #0f1117; border-top: 6px solid var(--su-red); border-radius: 14px; padding: clamp(16px, 4vw, 40px);
@@ -163,7 +163,7 @@ window.dash = (() => {
 <div class="su" lang="fr">
   <header class="su-head" id="haut">
     <div>
-      <p class="su-kicker">UNITY RP  ·  STAFF PANEL  ·  RAPPORT</p>
+      <p class="su-kicker">UNITY LEGACY RP  ·  STAFF PANEL  ·  RAPPORT</p>
       <h1 class="su-title">Streamers Unity - commandes staff</h1>
       <p class="su-lede">Sur <span data-draw="perphrase">—</span>, <b data-draw="top" data-source="top" data-field="pseudo" data-where="periode=3 mois" class="dash-skeleton">—</b> est le streamer qui a fait le plus de /revive (<b data-draw="top" data-source="top" data-field="revive" data-where="periode=3 mois" class="dash-skeleton su-acc">—</b>), parmi les streamers partenaires.</p>
     </div>
@@ -255,7 +255,7 @@ window.dash = (() => {
     <div class="su-modal-box">
       <div class="su-modal-head">
         <div>
-          <p class="su-kicker">UNITY RP  ·  STAFF PANEL</p>
+          <p class="su-kicker">UNITY LEGACY RP  ·  STAFF PANEL</p>
           <h2 id="su-ems-title">Perte des EMS</h2>
         </div>
         <button type="button" class="su-close" aria-label="Fermer">×</button>
@@ -285,7 +285,7 @@ window.dash = (() => {
 <script>
   d3.formatDefaultLocale({ decimal: ',', thousands: ' ', grouping: [3], currency: ['', ' €'] });
   window.suFmt = d3.format(',');
-  window.suPal = ['#e5484d', '#f59e0b', '#60a5fa'];
+  window.suPal = ['#a855f7', '#f59e0b', '#60a5fa'];
   window.suCats = ['revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'giveveh', 'kick', 'unban'];
   window.suNames = { revive: '/revive', revivezone: '/revivezone', spawn: 'Spawn véhicule', heal: '/heal', repairveh: '/repairveh', dve: '/dve', noclip: '/noclip', tp: 'Téléportations', giveveh: '/giveveh', kick: '/kick' };
   window.suSort = { k: 'revive', dir: -1 };
@@ -618,6 +618,6 @@ window.dash = (() => {
 </script>
 
 </div>
-<p class="su-site-foot">Unity RP - Rapport staff · données des logs du panel staff, mises à jour automatiquement</p>
+<p class="su-site-foot">Unity Legacy RP - Rapport staff · données des logs du panel staff, mises à jour automatiquement</p>
 </body>
 </html>
