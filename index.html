@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Streamers Unity - commandes staff</title>
+<title>Streamers &amp; animateurs - Unity Legacy RP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
@@ -27,7 +27,7 @@
 <script>
 window.dash = (() => {
   const store = {}, calcs = {}, draws = {}, cbs = [];
-  let params = { periode: '3 mois', metrique: 'revive' };
+  let params = { periode: '3 mois', metrique: 'revive', role: 'Tous' };
   const files = { streamers: 'streamers.json', semaines: 'semaines.json', zones: 'zones_periodes.json', extraction: 'extraction.json' };
   const api = {
     colors: ['#a855f7', '#f59e0b', '#60a5fa'],
@@ -48,7 +48,7 @@ window.dash = (() => {
     onData(fn) { cbs.push(fn); try { fn(); } catch (e) { console.error(e); } },
     params() { return params; },
     setParams(p) { params = { ...params, ...p }; runAll(); },
-    resetParams() { params = { periode: '3 mois', metrique: 'revive' }; runAll(); },
+    resetParams() { params = { periode: '3 mois', metrique: 'revive', role: 'Tous' }; runAll(); },
     refresh() {},
     setLink() {},
   };
@@ -164,12 +164,19 @@ window.dash = (() => {
   <header class="su-head" id="haut">
     <div>
       <p class="su-kicker">UNITY LEGACY RP  ·  STAFF PANEL  ·  RAPPORT</p>
-      <h1 class="su-title">Streamers Unity - commandes staff</h1>
-      <p class="su-lede">Sur <span data-draw="perphrase">—</span>, <b data-draw="top" data-source="top" data-field="pseudo" data-where="periode=3 mois" class="dash-skeleton">—</b> est le streamer qui a fait le plus de /revive (<b data-draw="top" data-source="top" data-field="revive" data-where="periode=3 mois" class="dash-skeleton su-acc">—</b>), parmi les streamers partenaires.</p>
+      <h1 class="su-title">Streamers &amp; animateurs - commandes staff</h1>
+      <p class="su-lede">Sur <span data-draw="perphrase">—</span>, <b data-draw="top" data-source="top" data-field="pseudo" data-where="periode=3 mois" class="dash-skeleton">—</b> est celui qui a fait le plus de /revive (<b data-draw="top" data-source="top" data-field="revive" data-where="periode=3 mois" class="dash-skeleton su-acc">—</b>), parmi les <span data-draw="rolephrase">—</span>.</p>
     </div>
     <div class="su-right">
     <button type="button" class="su-ems-open">Perte des EMS</button>
     <div class="su-badge"><small>MIS À JOUR LE</small><span data-draw="extrait" data-source="extraction" data-field="extrait_texte">—</span></div>
+    <label class="su-ctrl">Rôle
+      <select class="dash-select su-role" aria-label="Rôle">
+        <option value="Tous">Tous</option>
+        <option value="Streamer">Streamers</option>
+        <option value="Animateur">Animateurs</option>
+      </select>
+    </label>
     <label class="su-ctrl">Période
       <select class="dash-select su-periode" aria-label="Période">
         <option value="3 mois">3 mois</option>
@@ -191,7 +198,7 @@ window.dash = (() => {
 
   <section class="su-card" id="evolution">
     <h2>Évolution par semaine</h2>
-    <p class="su-note">Total des streamers, par semaine (du lundi), pour les semaines qui touchent <span data-draw="perphrase">—</span>. La dernière semaine est en cours.</p>
+    <p class="su-note">Total des <span data-draw="rolephrase">—</span>, par semaine (du lundi), pour les semaines qui touchent <span data-draw="perphrase">—</span>. La dernière semaine est en cours.</p>
     <div class="su-legend"><span><i class="su-sw" data-i="0"></i>/revive</span><span><i class="su-sw" data-i="1"></i>/revivezone</span><span><i class="su-sw" data-i="2"></i>Spawn véhicule</span></div>
     <div class="su-chart" data-draw="weekly" data-source="semaines extraction"></div>
   </section>
@@ -200,8 +207,8 @@ window.dash = (() => {
     <section class="su-card" id="classement">
       <div class="su-cardhead">
         <div>
-          <h2>Classement des streamers</h2>
-          <p class="su-note">Top 15 sur la période choisie en haut.</p>
+          <h2>Classement</h2>
+          <p class="su-note">Top 15 des <span data-draw="rolephrase">—</span>, sur la période choisie en haut.</p>
         </div>
         <select class="dash-select su-metrique" aria-label="Commande">
           <option value="revive">/revive</option>
@@ -219,7 +226,7 @@ window.dash = (() => {
 
     <section class="su-card" id="rayons">
       <h2>/revivezone par rayon</h2>
-      <p class="su-note">Tous les streamers, sur <span data-draw="perphrase">—</span>. Le rayon est le chiffre tapé après /revivezone.</p>
+      <p class="su-note">Les <span data-draw="rolephrase">—</span>, sur <span data-draw="perphrase">—</span>. Le rayon est le chiffre tapé après /revivezone.</p>
       <div class="su-chart" data-draw="zones" data-source="zones"></div>
     </section>
   </div>
@@ -227,15 +234,16 @@ window.dash = (() => {
   <section class="su-card" id="detail">
     <div class="su-cardhead">
       <div>
-        <h2>Détail par streamer</h2>
-        <p class="su-note">Tous les streamers partenaires, sur la période choisie en haut. Clique sur une colonne pour trier.</p>
+        <h2>Détail par joueur</h2>
+        <p class="su-note">Tous les <span data-draw="rolephrase">—</span>, sur la période choisie en haut. Clique sur une colonne pour trier.</p>
       </div>
-      <input class="su-search" type="search" placeholder="Rechercher un streamer" aria-label="Rechercher un streamer">
+      <input class="su-search" type="search" placeholder="Rechercher un joueur" aria-label="Rechercher un joueur">
     </div>
     <div class="su-tablebox">
       <table class="su-table" data-source="streamers" data-row-key="pseudo,periode">
         <thead><tr>
-          <th data-field="pseudo"><button type="button" data-k="pseudo">Streamer</button></th>
+          <th data-field="pseudo"><button type="button" data-k="pseudo">Joueur</button></th>
+          <th data-field="role"><button type="button" data-k="role">Rôle</button></th>
           <th data-field="revive"><button type="button" data-k="revive">/revive</button></th>
           <th data-field="revivezone"><button type="button" data-k="revivezone">/revivezone</button></th>
           <th data-field="spawn"><button type="button" data-k="spawn">Spawn véh.</button></th>
@@ -260,17 +268,17 @@ window.dash = (() => {
         </div>
         <button type="button" class="su-close" aria-label="Fermer">×</button>
       </div>
-      <p class="su-note">Chaque /revive fait par un streamer est un revive que les EMS n'ont pas facturé (3 500 $), et chaque /heal un soin non facturé (1 200 $). Les /revivezone ne sont pas comptées.</p>
+      <p class="su-note">Chaque /revive fait par un streamer ou un animateur est un revive que les EMS n'ont pas facturé (3 500 $), et chaque /heal un soin non facturé (1 200 $). Les /revivezone ne sont pas comptées.</p>
       <div class="su-ems-tiles">
         <div class="su-tile" style="--su-c: var(--su-red)"><span class="su-tlabel">3 mois</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=3 mois">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=3 mois">—</span> revives · <span data-draw="ems-tot" data-source="pertes_totaux" data-field="heal" data-where="periode=3 mois">—</span> soins</span></div>
         <div class="su-tile" style="--su-c: var(--su-amber)"><span class="su-tlabel">30 jours</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=30 jours">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=30 jours">—</span> revives · <span data-draw="ems-tot" data-source="pertes_totaux" data-field="heal" data-where="periode=30 jours">—</span> soins</span></div>
         <div class="su-tile" style="--su-c: var(--su-blue)"><span class="su-tlabel">7 jours</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=7 jours">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=7 jours">—</span> revives · <span data-draw="ems-tot" data-source="pertes_totaux" data-field="heal" data-where="periode=7 jours">—</span> soins</span></div>
       </div>
-      <p class="su-note">Par streamer, sur la période choisie en haut du tableau de bord.</p>
+      <p class="su-note">Par joueur, sur la période et le rôle choisis en haut.</p>
       <div class="su-tablebox">
         <table class="su-table su-ems-table" data-source="pertes" data-row-key="pseudo,periode">
           <thead><tr>
-            <th data-field="pseudo"><button type="button" tabindex="-1">Streamer</button></th>
+            <th data-field="pseudo"><button type="button" tabindex="-1">Joueur</button></th>
             <th data-field="revive"><button type="button" tabindex="-1">/revive</button></th>
             <th data-field="heal"><button type="button" tabindex="-1">/heal</button></th>
             <th data-field="perte"><button type="button" tabindex="-1">Perte EMS</button></th>
@@ -290,19 +298,26 @@ window.dash = (() => {
   window.suCats = ['revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'giveveh', 'kick', 'unban'];
   window.suNames = { revive: '/revive', revivezone: '/revivezone', spawn: 'Spawn véhicule', heal: '/heal', repairveh: '/repairveh', dve: '/dve', noclip: '/noclip', tp: 'Téléportations', giveveh: '/giveveh', kick: '/kick' };
   window.suSort = { k: 'revive', dir: -1 };
+  window.suRole = () => dash.params().role || 'Tous';
+  window.suIn = (r, g) => g === 'Tous' || String(r.role || '').includes(g);
+  window.suRolePhrase = { Tous: 'streamers et animateurs', Streamer: 'streamers partenaires', Animateur: 'animateurs' };
   window.suQuery = '';
 
   dash.calc('totaux', {
     title: 'Totaux par période',
-    description: 'Somme des commandes des streamers pour chaque période, et la moyenne par jour sur les jours couverts par les logs.',
+    description: 'Somme des commandes pour chaque rôle (Tous, Streamer, Animateur) et chaque période, et la moyenne par jour sur les jours couverts par les logs.',
     inputs: ['streamers', 'extraction'],
     fn: (streamers, extraction) => {
       const cats = ['revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'giveveh', 'kick', 'unban'];
       const jours = { '3 mois': Number(extraction[0]?.jours_3_mois) || 92, '30 jours': 30, '7 jours': 7 };
       const out = {};
       for (const r of streamers) {
-        const o = out[r.periode] || (out[r.periode] = { periode: r.periode });
-        for (const c of cats) o[c] = (o[c] || 0) + Number(r[c]);
+        for (const g of ['Tous', 'Streamer', 'Animateur']) {
+          if (g !== 'Tous' && !String(r.role || '').includes(g)) continue;
+          const key = g + '|' + r.periode;
+          const o = out[key] || (out[key] = { groupe: g, periode: r.periode });
+          for (const c of cats) o[c] = (o[c] || 0) + Number(r[c]);
+        }
       }
       for (const o of Object.values(out)) for (const c of cats) o[c + '_jour'] = Math.round(o[c] / jours[o.periode]);
       return Object.values(out);
@@ -310,35 +325,43 @@ window.dash = (() => {
   });
 
   dash.calc('top', {
-    title: 'Streamer avec le plus de /revive',
-    description: 'Pour chaque période, le streamer qui a fait le plus de /revive.',
+    title: 'Joueur avec le plus de /revive',
+    description: 'Pour chaque rôle et chaque période, le joueur qui a fait le plus de /revive.',
     inputs: ['streamers'],
     fn: (streamers) => {
       const out = {};
       for (const r of streamers) {
         const v = Number(r.revive);
-        if (!out[r.periode] || v > out[r.periode].revive) out[r.periode] = { periode: r.periode, pseudo: r.pseudo, revive: v };
+        for (const g of ['Tous', 'Streamer', 'Animateur']) {
+          if (g !== 'Tous' && !String(r.role || '').includes(g)) continue;
+          const key = g + '|' + r.periode;
+          if (!out[key] || v > out[key].revive) out[key] = { groupe: g, periode: r.periode, pseudo: r.pseudo, revive: v };
+        }
       }
       return Object.values(out);
     },
   });
 
   dash.calc('pertes', {
-    title: 'Perte des EMS par streamer',
-    description: 'Pour chaque streamer et chaque période : /revive × 3 500 $ + /heal × 1 200 $.',
+    title: 'Perte des EMS par joueur',
+    description: 'Pour chaque joueur et chaque période : /revive × 3 500 $ + /heal × 1 200 $.',
     inputs: ['streamers'],
-    fn: (streamers) => streamers.map((r) => ({ pseudo: r.pseudo, periode: r.periode, revive: Number(r.revive), heal: Number(r.heal), perte: Number(r.revive) * 3500 + Number(r.heal) * 1200 })),
+    fn: (streamers) => streamers.map((r) => ({ pseudo: r.pseudo, role: r.role, periode: r.periode, revive: Number(r.revive), heal: Number(r.heal), perte: Number(r.revive) * 3500 + Number(r.heal) * 1200 })),
   });
 
   dash.calc('pertes_totaux', {
     title: 'Perte des EMS, total',
-    description: 'Total pour chaque période : /revive × 3 500 $ + /heal × 1 200 $.',
+    description: 'Total pour chaque rôle et chaque période : /revive × 3 500 $ + /heal × 1 200 $.',
     inputs: ['pertes'],
     fn: (pertes) => {
       const out = {};
       for (const r of pertes) {
-        const o = out[r.periode] || (out[r.periode] = { periode: r.periode, revive: 0, heal: 0, perte: 0 });
-        o.revive += r.revive; o.heal += r.heal; o.perte += r.perte;
+        for (const g of ['Tous', 'Streamer', 'Animateur']) {
+          if (g !== 'Tous' && !String(r.role || '').includes(g)) continue;
+          const key = g + '|' + r.periode;
+          const o = out[key] || (out[key] = { groupe: g, periode: r.periode, revive: 0, heal: 0, perte: 0 });
+          o.revive += r.revive; o.heal += r.heal; o.perte += r.perte;
+        }
       }
       return Object.values(out);
     },
@@ -361,6 +384,9 @@ window.dash = (() => {
   document.querySelectorAll('.su-periode').forEach((sel) => {
     sel.addEventListener('change', () => dash.setParams({ periode: sel.value }));
   });
+  document.querySelectorAll('.su-role').forEach((sel) => {
+    sel.addEventListener('change', () => dash.setParams({ role: sel.value }));
+  });
   document.querySelectorAll('.su-metrique').forEach((sel) => {
     sel.addEventListener('change', () => dash.setParams({ metrique: sel.value }));
   });
@@ -371,7 +397,7 @@ window.dash = (() => {
     b.addEventListener('click', () => {
       const k = b.dataset.k;
       if (window.suSort.k === k) window.suSort.dir *= -1;
-      else window.suSort = { k, dir: k === 'pseudo' ? 1 : -1 };
+      else window.suSort = { k, dir: k === 'pseudo' || k === 'role' ? 1 : -1 };
       document.querySelectorAll('.su-table th').forEach((th) => {
         if (th.querySelector('button')?.dataset.k === window.suSort.k) th.setAttribute('aria-sort', window.suSort.dir > 0 ? 'ascending' : 'descending');
         else th.removeAttribute('aria-sort');
@@ -389,6 +415,7 @@ window.dash = (() => {
   dash.onData(() => {
     const p = dash.params();
     document.querySelectorAll('.su-periode').forEach((s) => { s.value = p.periode || '3 mois'; });
+    document.querySelectorAll('.su-role').forEach((s) => { s.value = p.role || 'Tous'; });
     document.querySelectorAll('.su-metrique').forEach((s) => { s.value = p.metrique || 'revive'; });
     document.querySelectorAll('.su-table th').forEach((th) => {
       const k = th.querySelector('button')?.dataset.k;
@@ -408,15 +435,16 @@ window.dash = (() => {
   });
 
   dash.draw('per', (el) => { el.textContent = window.suPer(); });
+  dash.draw('rolephrase', (el) => { el.textContent = window.suRolePhrase[window.suRole()]; });
   dash.draw('perphrase', (el) => { el.textContent = window.suPhrase[window.suPer()]; });
 
   dash.draw('top', (el) => {
-    const per = window.suPer();
-    el.dataset.where = 'periode=' + per;
+    const per = window.suPer(), g = window.suRole();
+    el.dataset.where = 'groupe=' + g + '&periode=' + per;
     const d = dash.data('top');
     if (d.status !== 'ok') { el.textContent = '—'; if (d.status !== 'loading') el.classList.remove('dash-skeleton'); return; }
     el.classList.remove('dash-skeleton');
-    const row = d.data.find((r) => r.periode === per);
+    const row = d.data.find((r) => r.periode === per && r.groupe === g);
     const v = row ? row[el.dataset.field] : '—';
     el.textContent = typeof v === 'number' ? window.suFmt(v) : v;
   });
@@ -424,8 +452,9 @@ window.dash = (() => {
   dash.draw('ems-tot', (el) => {
     const d = dash.data('pertes_totaux');
     if (d.status !== 'ok') { el.textContent = '—'; return; }
-    const per = new URLSearchParams(el.dataset.where).get('periode');
-    const row = d.data.find((r) => r.periode === per);
+    const per = new URLSearchParams(el.dataset.where).get('periode'), g = window.suRole();
+    el.dataset.where = 'groupe=' + g + '&periode=' + per;
+    const row = d.data.find((r) => r.periode === per && r.groupe === g);
     el.textContent = row ? window.suFmt(row[el.dataset.field]) : '—';
   });
 
@@ -433,7 +462,7 @@ window.dash = (() => {
     const d = dash.data('pertes');
     if (d.status !== 'ok') { tb.replaceChildren(); return; }
     const per = dash.params().periode || '3 mois';
-    const rows = d.data.filter((r) => r.periode === per && r.perte > 0).sort((a, b) => b.perte - a.perte);
+    const rows = d.data.filter((r) => r.periode === per && r.perte > 0 && window.suIn(r, window.suRole())).sort((a, b) => b.perte - a.perte);
     tb.replaceChildren(...rows.map((r) => {
       const tr = document.createElement('tr');
       tr.dataset.key = encodeURIComponent(r.pseudo) + ',' + encodeURIComponent(r.periode);
@@ -447,12 +476,12 @@ window.dash = (() => {
   });
 
   dash.draw('tot', (el) => {
-    const per = window.suPer();
-    el.dataset.where = 'periode=' + per;
+    const per = window.suPer(), g = window.suRole();
+    el.dataset.where = 'groupe=' + g + '&periode=' + per;
     const d = dash.data('totaux');
     if (d.status !== 'ok') { el.textContent = '—'; if (d.status !== 'loading') el.classList.remove('dash-skeleton'); return; }
     el.classList.remove('dash-skeleton');
-    const row = d.data.find((r) => r.periode === per);
+    const row = d.data.find((r) => r.periode === per && r.groupe === g);
     el.textContent = row ? window.suFmt(row[el.dataset.field]) : '—';
   });
 </script>
@@ -490,7 +519,7 @@ window.dash = (() => {
     const days = { '3 mois': 0, '30 jours': 30, '7 jours': 7 }[window.suPer()];
     const ex = dash.data('extraction');
     const fin = ex.status === 'ok' && ex.data[0] ? Date.parse(ex.data[0].extrait_le) : Date.now();
-    const rows = d.data.map((r) => ({ ...r, date: new Date(r.semaine + 'T00:00:00Z') }))
+    const rows = d.data.filter((r) => (r.groupe || 'Tous') === window.suRole()).map((r) => ({ ...r, date: new Date(r.semaine + 'T00:00:00Z') }))
       .filter((r) => !days || r.date.getTime() + 7 * 864e5 > fin - days * 864e5);
     const keys = ['revive', 'revivezone', 'spawn'];
     const W = Math.max(el.clientWidth, 280), H = 260;
@@ -537,7 +566,7 @@ window.dash = (() => {
     if (d.status !== 'ok') { el.replaceChildren(); return; }
     const p = dash.params();
     const per = p.periode || '3 mois', m = p.metrique || 'revive';
-    const rows = d.data.filter((r) => r.periode === per).map((r) => ({ ...r, v: Number(r[m]) }))
+    const rows = d.data.filter((r) => r.periode === per && window.suIn(r, window.suRole())).map((r) => ({ ...r, v: Number(r[m]) }))
       .sort((a, b) => b.v - a.v).slice(0, 15);
     const W = Math.max(el.clientWidth, 280), bh = 18, gap = 9, H = rows.length * (bh + gap) + 6;
     el.replaceChildren();
@@ -571,7 +600,7 @@ window.dash = (() => {
     if (suFail(el, d.status)) return;
     if (d.status !== 'ok') { el.replaceChildren(); return; }
     const per = window.suPer();
-    const rows = d.data.filter((r) => r.periode === per).sort((a, b) => Number(a.ordre) - Number(b.ordre)).map((r) => ({ ...r, v: Number(r.nombre) }));
+    const rows = d.data.filter((r) => r.periode === per && (r.groupe || 'Tous') === window.suRole()).sort((a, b) => Number(a.ordre) - Number(b.ordre)).map((r) => ({ ...r, v: Number(r.nombre) }));
     const W = Math.max(el.clientWidth, 280), H = 260, mb = 40;
     el.replaceChildren();
     const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
@@ -598,18 +627,19 @@ window.dash = (() => {
     const d = dash.data('streamers');
     if (d.status !== 'ok') { tb.replaceChildren(); return; }
     const per = dash.params().periode || '3 mois';
-    const cols = ['pseudo', 'revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'kick'];
+    const cols = ['pseudo', 'role', 'revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'kick'];
     const hide = new Set(['dve', 'noclip', 'tp', 'kick']);
     const { k, dir } = window.suSort;
     const q = window.suQuery;
-    const rows = d.data.filter((r) => r.periode === per && (!q || (r.pseudo + ' ' + r.compte).toLowerCase().includes(q)))
-      .sort((a, b) => (k === 'pseudo' ? dir * String(a.pseudo).localeCompare(String(b.pseudo), 'fr') : dir * (Number(a[k]) - Number(b[k]))));
+    const rows = d.data.filter((r) => r.periode === per && window.suIn(r, window.suRole()) && (!q || (r.pseudo + ' ' + r.compte).toLowerCase().includes(q)))
+      .sort((a, b) => (k === 'pseudo' || k === 'role' ? dir * String(a[k] || '').localeCompare(String(b[k] || ''), 'fr') : dir * (Number(a[k]) - Number(b[k]))));
     tb.replaceChildren(...rows.map((r) => {
       const tr = document.createElement('tr');
       tr.dataset.key = encodeURIComponent(r.pseudo) + ',' + encodeURIComponent(r.periode);
       for (const c of cols) {
         const td = document.createElement('td');
         if (c === 'pseudo') td.textContent = r.pseudo;
+        else if (c === 'role') { td.textContent = r.role || '—'; td.className = 'z'; }
         else { const v = Number(r[c]); td.textContent = window.suFmt(v); if (!v) td.className = 'z'; }
         if (hide.has(c)) td.classList.add('su-hide-sm');
         tr.appendChild(td);
