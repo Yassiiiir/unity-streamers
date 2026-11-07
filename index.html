@@ -7,657 +7,550 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <style>
   :root {
-    --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 12px; --cds-gap-lg: 16px; --cds-gap-xl: 24px;
-    --cds-pad-xs: 4px; --cds-pad-sm: 8px; --cds-pad-md: 12px; --cds-pad-lg: 16px; --cds-pad-xl: 24px;
-    --cds-radius: 8px; --cds-font-size-caption: 12px; --cds-font-size-body: 14px; --cds-font-size-heading: 16px; --cds-font-size-title: 28px;
-    --cds-font-weight-medium: 500; --cds-dur-slow: .3s; --cds-shadow-popover: 0 8px 24px rgba(0,0,0,.45);
-    --font-anthropic-sans: Poppins, "Segoe UI", system-ui, sans-serif; --font-anthropic-serif: Poppins, "Segoe UI", system-ui, sans-serif;
+    --bg: #09090b; --frame: #0e0e10; --card: #151517; --card2: #1b1b1e; --line: rgba(255,255,255,.07); --line2: rgba(255,255,255,.12);
+    --fg: #f4f4f5; --muted: #8b8b94; --dim: #5e5e66;
+    --violet: #a855f7; --amber: #f59e0b; --blue: #60a5fa; --pos: #4ade80; --neg: #f87171;
+    --r: 22px;
   }
-  html, body { margin: 0; background: #0a0c11; }
-  body { padding: clamp(0px, 3vw, 32px); }
-  #dash-root { max-width: 1280px; margin: 0 auto; }
-  .dash-select { appearance: none; font: inherit; font-size: 13px; padding: 8px 32px 8px 12px; cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a90a2' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 12px center; }
-  .dash-skeleton { color: transparent !important; background: #232734; border-radius: 6px; }
-  .su-site-foot { max-width: 1280px; margin: 16px auto 0; font: 12px Poppins, system-ui, sans-serif; color: #5b6172; text-align: center; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: Inter, "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { padding: 20px; }
+  button { font: inherit; color: inherit; }
+  .frame { max-width: 1480px; margin: 0 auto; background: var(--frame); border: 1px solid var(--line); border-radius: 26px; overflow: hidden; }
+  .crumb { display: flex; align-items: center; gap: 10px; padding: 14px 28px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+  .crumb b { color: var(--fg); font-weight: 500; }
+  .crumb img { width: 22px; height: 22px; }
+  .wrap { padding: 26px 28px 30px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* header */
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+  .top h1 { margin: 0; font-size: clamp(26px, 2.6vw, 36px); font-weight: 400; letter-spacing: -.02em; }
+  .top h1 span { color: var(--muted); }
+  .top-r { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-left: auto; }
+  .search { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--line2); border-radius: 12px; padding: 0 12px; height: 40px; width: 230px; }
+  .search input { all: unset; flex: 1; font-size: 13px; color: var(--fg); }
+  .search svg { flex: none; opacity: .6; }
+  .chip-time { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border: 1px solid var(--line2); border-radius: 12px; background: var(--card); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  .chip-time b { color: var(--fg); font-weight: 500; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pos); box-shadow: 0 0 10px var(--pos); }
+  .btn-w { height: 40px; padding: 0 18px; border: 0; border-radius: 12px; background: #f4f4f5; color: #0b0b0c; font-weight: 600; font-size: 13.5px; cursor: pointer; }
+  .btn-w:hover { background: #fff; }
+  .btn-d { height: 40px; padding: 0 18px; border: 1px solid var(--line2); border-radius: 12px; background: transparent; color: var(--fg); font-weight: 500; font-size: 13.5px; cursor: pointer; }
+  .btn-d:hover { background: var(--card2); }
+
+  /* segmented */
+  .bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+  .lede { margin: 0; color: var(--muted); font-size: 14px; font-weight: 300; }
+  .lede b { color: var(--fg); font-weight: 500; }
+  .lede .acc { color: var(--violet); font-weight: 600; }
+  .seg { display: inline-flex; gap: 4px; padding: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); font-size: 12.5px; font-weight: 500; padding: 7px 13px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
+  .seg button:hover { color: var(--fg); }
+  .seg button[aria-pressed="true"] { background: #2a2a2f; color: var(--fg); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+  .segs { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* kpis */
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); background: var(--card); border: 1px solid var(--line); border-radius: var(--r); }
+  .kpi { padding: 18px 22px; border-left: 1px solid var(--line); min-width: 0; }
+  .kpi:first-child { border-left: 0; }
+  .kpi small { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .kpi small i { width: 8px; height: 8px; border-radius: 3px; background: var(--c); }
+  .kpi .v { font-size: 26px; font-weight: 500; letter-spacing: -.02em; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .kpi .s { font-size: 12px; color: var(--dim); margin-top: 2px; }
+
+  /* grid */
+  .g1 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr) minmax(0, 1fr); gap: 20px; }
+  .g2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2.45fr); gap: 20px; }
+  .col { display: flex; flex-direction: column; gap: 20px; }
+  .card { background: linear-gradient(180deg, var(--card2), var(--card)); border: 1px solid var(--line); border-radius: var(--r); padding: 24px; position: relative; min-width: 0; }
+  .card h2 { margin: 0; font-size: 19px; font-weight: 500; letter-spacing: -.01em; }
+  .card h2 small { font-size: 12px; color: var(--dim); font-weight: 400; margin-left: 8px; }
+  .chead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .note { font-size: 12.5px; color: var(--muted); font-weight: 300; margin: 6px 0 0; line-height: 1.5; }
+
+  /* EMS card */
+  .ems { display: flex; flex-direction: column; }
+  .ico { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 30% 30%, #2b2b31, #18181b); border: 1px solid var(--line2); }
+  .ico img { width: 30px; height: 30px; }
+  .ems .amount { font-size: 34px; font-weight: 500; letter-spacing: -.02em; margin-top: 20px; font-variant-numeric: tabular-nums; }
+  .ems .amount span { font-size: 18px; color: var(--violet); margin-left: 4px; }
+  .split { margin: 18px 0 20px; padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,.03); border: 1px solid var(--line); display: grid; gap: 10px; }
+  .split div { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+  .split div b { color: var(--fg); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .ems .btn-w { margin-top: auto; width: 100%; height: 46px; }
+
+  /* chart card */
+  .legend { display: flex; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 12px; height: 6px; border-radius: 3px; margin-right: 6px; vertical-align: 1px; }
+  .chart { position: relative; height: 240px; margin-top: 8px; }
+  .cfoot { display: flex; align-items: flex-end; justify-content: space-between; border-top: 1px solid var(--line); margin: 14px -24px -24px; padding: 18px 24px 22px; }
+  .big { font-size: 40px; font-weight: 300; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .big small { font-size: 15px; color: var(--muted); margin-left: 6px; letter-spacing: 0; }
+  .delta { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+  .delta b { background: #f4f4f5; color: #0b0b0c; font-weight: 600; padding: 4px 9px; border-radius: 999px; font-size: 12px; }
+  .delta b.dn { background: #2a2a2f; color: var(--fg); }
+
+  /* ranking list */
+  .rank { display: flex; flex-direction: column; }
+  .rank .seg { margin-top: 14px; align-self: flex-start; flex-wrap: wrap; }
+  .rlist { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; overflow: auto; max-height: 392px; padding-right: 4px; }
+  .ritem { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.02); }
+  .av { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 600; background: #232327; border: 1px solid var(--line2); color: var(--fg); }
+  .ritem:nth-child(1) .av { background: var(--violet); border-color: transparent; color: #fff; }
+  .ritem:nth-child(2) .av, .ritem:nth-child(3) .av { background: rgba(245,158,11,.18); color: var(--amber); border-color: rgba(245,158,11,.35); }
+  .rname { min-width: 0; }
+  .rname b { display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rname span { font-size: 11.5px; color: var(--dim); }
+  .rval { font-size: 13px; font-weight: 600; padding: 6px 11px; border-radius: 10px; border: 1px solid var(--line2); font-variant-numeric: tabular-nums; }
+  .ritem:nth-child(1) .rval { background: #f4f4f5; color: #0b0b0c; border-color: transparent; }
+
+  /* table */
+  .tbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; }
+  .count { font-size: 12.5px; color: var(--muted); }
+  .tbox { margin-top: 14px; max-height: 640px; overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th { position: sticky; top: 0; background: var(--card); z-index: 1; text-align: right; font-weight: 400; color: var(--dim); font-size: 12px; padding: 0; border-bottom: 1px solid var(--line); }
+  th button { all: unset; cursor: pointer; display: block; padding: 10px 10px; white-space: nowrap; }
+  th button::after { content: " ↓"; opacity: 0; }
+  th[aria-sort] button { color: var(--fg); }
+  th[aria-sort="descending"] button::after { opacity: 1; content: " ↓"; }
+  th[aria-sort="ascending"] button::after { opacity: 1; content: " ↑"; }
+  th:first-child, td:first-child { text-align: left; }
+  td { padding: 10px 10px; text-align: right; border-bottom: 1px solid rgba(255,255,255,.04); white-space: nowrap; }
+  tbody tr:hover td { background: rgba(255,255,255,.025); }
+  .who { display: flex; align-items: center; gap: 10px; }
+  .who .av { width: 30px; height: 30px; font-size: 11px; }
+  .who b { font-weight: 500; }
+  .role { font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); }
+  .role.s { color: #d8b4fe; border-color: rgba(168,85,247,.35); }
+  .role.a { color: #93c5fd; border-color: rgba(96,165,250,.35); }
+  td.z { color: var(--dim); }
+  td.rv { color: var(--fg); font-weight: 600; }
+  .loss { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #f4f4f5; color: #0b0b0c; font-weight: 600; font-size: 12px; }
+  .loss.lo { background: #26262a; color: var(--fg); }
+
+  /* spotlight */
+  .spot .row1 { display: flex; justify-content: space-between; align-items: center; }
+  .spot .av { width: 54px; height: 54px; font-size: 18px; background: var(--violet); border: 0; color: #fff; }
+  .arrow { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line2); background: transparent; display: grid; place-items: center; cursor: pointer; }
+  .arrow:hover { background: var(--card2); }
+  .spot h3 { margin: 22px 0 2px; font-size: 22px; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .spot h3 span { color: var(--dim); font-weight: 400; }
+  .spot .sub { font-size: 12.5px; color: var(--muted); }
+  .kv { margin-top: 18px; display: grid; gap: 10px; }
+  .kv div { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+  .kv b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+  .btns button { height: 44px; }
+
+  .zchart { position: relative; height: 250px; margin-top: 10px; }
+
+  .tip { position: absolute; pointer-events: none; background: #1f1f23; border: 1px solid var(--line2); border-radius: 12px; padding: 8px 11px; font-size: 12px; white-space: nowrap; z-index: 5; box-shadow: 0 10px 30px rgba(0,0,0,.5); display: none; }
+  .tip .d { color: var(--muted); margin-bottom: 4px; }
+  .tip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+
+  /* modal */
+  .modal { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.7); backdrop-filter: blur(6px); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; overflow: auto; }
+  .modal[hidden] { display: none; }
+  .mbox { width: min(100%, 760px); background: var(--frame); border: 1px solid var(--line2); border-radius: 26px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+  .mhead { display: flex; justify-content: space-between; align-items: flex-start; }
+  .mhead h2 { margin: 0; font-size: 26px; font-weight: 400; letter-spacing: -.02em; }
+  .mtiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .mtile { padding: 16px 18px; border-radius: 18px; border: 1px solid var(--line); background: var(--card); }
+  .mtile[aria-current="true"] { border-color: rgba(168,85,247,.55); background: linear-gradient(180deg, rgba(168,85,247,.12), var(--card)); }
+  .mtile small { font-size: 12px; color: var(--muted); }
+  .mtile .v { font-size: 24px; font-weight: 500; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .mtile .v span { color: var(--violet); font-size: 14px; margin-left: 3px; }
+  .mtile .s { font-size: 11.5px; color: var(--dim); margin-top: 3px; }
+  .mtable { max-height: 52vh; overflow: auto; }
+  .mtable th { background: var(--frame); }
+
+  .foot { text-align: center; font-size: 12px; color: var(--dim); padding: 18px 0 4px; }
+
+  @media (max-width: 1200px) {
+    .kpis { grid-template-columns: repeat(3, 1fr); }
+    .kpi:nth-child(4) { border-left: 0; }
+    .kpi:nth-child(n+4) { border-top: 1px solid var(--line); }
+    .g1 { grid-template-columns: 1fr 1fr; }
+    .g1 .chartcard { grid-column: 1 / -1; order: -1; }
+    .g2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    body { padding: 0; }
+    .frame { border-radius: 0; border: 0; }
+    .wrap { padding: 18px 14px; }
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .kpi:nth-child(3), .kpi:nth-child(5) { border-left: 0; }
+    .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+    .g1, .g2 { grid-template-columns: 1fr; }
+    .search { width: 100%; }
+    .mtiles { grid-template-columns: 1fr; }
+    .hide-sm { display: none; }
+  }
 </style>
-<script>
-window.dash = (() => {
-  const store = {}, calcs = {}, draws = {}, cbs = [];
-  let params = { periode: '3 mois', metrique: 'revive', role: 'Tous' };
-  const files = { streamers: 'streamers.json', semaines: 'semaines.json', zones: 'zones_periodes.json', extraction: 'extraction.json' };
-  const api = {
-    colors: ['#a855f7', '#f59e0b', '#60a5fa'],
-    data(id) {
-      if (calcs[id]) {
-        if (calcs[id].out) return calcs[id].out;
-        const ins = calcs[id].inputs.map((i) => api.data(i));
-        if (ins.some((d) => d.status === 'error')) return { status: 'error', data: [] };
-        if (ins.some((d) => d.status !== 'ok')) return { status: 'loading', data: [] };
-        calcs[id].out = { status: 'ok', data: calcs[id].fn(...ins.map((d) => d.data)) };
-        return calcs[id].out;
-      }
-      return store[id] || { status: 'loading', data: [] };
-    },
-    calc(id, def) { calcs[id] = { inputs: def.inputs, fn: def.fn }; },
-    loader() {},
-    draw(name, fn) { if (fn) draws[name] = fn; run(name); },
-    onData(fn) { cbs.push(fn); try { fn(); } catch (e) { console.error(e); } },
-    params() { return params; },
-    setParams(p) { params = { ...params, ...p }; runAll(); },
-    resetParams() { params = { periode: '3 mois', metrique: 'revive', role: 'Tous' }; runAll(); },
-    refresh() {},
-    setLink() {},
-  };
-  function run(name) {
-    const fn = draws[name]; if (!fn) return;
-    document.querySelectorAll(`[data-draw="${name}"]`).forEach((el) => { try { fn(el); } catch (e) { console.error(name, e); } });
-  }
-  function runAll() {
-    cbs.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } });
-    Object.keys(draws).forEach(run);
-  }
-  window.addEventListener('DOMContentLoaded', async () => {
-    await Promise.all(Object.entries(files).map(async ([id, f]) => {
-      try {
-        const r = await fetch('data/' + f + '?v=' + Date.now(), { cache: 'no-store' });
-        const data = await r.json();
-        store[id] = { status: 'ok', data, columns: data.length ? Object.keys(data[0]) : [] };
-      } catch (e) { store[id] = { status: 'error', data: [], message: String(e) }; }
-    }));
-    Object.values(calcs).forEach((c) => { delete c.out; });
-    runAll();
-  });
-  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(runAll, 150); });
-  return api;
-})();
-</script>
 </head>
 <body>
-<div id="dash-root">
-<style>
-  #dash-root { --dash-gutter: 0; }
-  .su {
-    --color-fg: #e8eaf0; --color-fg-muted: #8a90a2; --color-panel: #181b24; --color-bg: #0f1117; --color-border-line: #2a2f3c;
-    --cds-chart-grid: #232734; --cds-chart-muted: #3a4050; --cds-surface-popover: #1f2330; --cds-border: #2a2f3c; --cds-text-secondary: #8a90a2;
-    --su-red: #a855f7; --su-amber: #f59e0b; --su-blue: #60a5fa;
-    display: flex; flex-direction: column; gap: var(--cds-gap-xl);
-    font-family: Poppins, "Segoe UI", system-ui, sans-serif; color: var(--color-fg);
-    background: #0f1117; border-top: 6px solid var(--su-red); border-radius: 14px; padding: clamp(16px, 4vw, 40px);
-  }
-  .su-brand { display: flex; align-items: center; gap: 18px; }
-  .su-logo { width: 64px; height: 64px; flex: none; filter: drop-shadow(0 4px 14px rgba(115, 101, 240, .35)); }
-  @media (max-width: 640px) { .su-logo { width: 48px; height: 48px; } .su-brand { gap: 12px; } }
-  .su-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--cds-gap-md); }
-  .su-kicker { font-size: 11px; font-weight: 500; letter-spacing: .08em; color: var(--color-fg-muted); margin: 0 0 6px; }
-  .su-title { font-weight: 700; font-size: clamp(24px, 4vw, 34px); line-height: 1.15; margin: 0 0 8px; letter-spacing: -.01em; }
-  .su-badge { display: flex; flex-direction: column; gap: 2px; background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 10px; padding: 8px 14px; }
-  .su-badge small { font-size: 10px; letter-spacing: .06em; color: var(--color-fg-muted); }
-  .su-badge span { font-size: 13px; font-weight: 500; }
-  .su-right { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); align-items: flex-end; }
-  .su .dash-select, .su-search { background-color: var(--color-panel); color: var(--color-fg); border: 1px solid var(--color-border-line); border-radius: 8px; }
-  .su-lede { margin: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-body); max-width: 46rem; }
-  .su .su-lede b { color: var(--color-fg); font-weight: 700; }
-  .su .su-lede b.su-acc { color: var(--su-red); }
-  .su-ctrl { display: flex; align-items: center; gap: var(--cds-gap-sm); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
-  .su-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); gap: var(--cds-gap-md); }
-  .su-tile, .su-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 14px; padding: 18px 20px; }
-  .su-tile { position: relative; }
-  .su-tile::before { content: ""; position: absolute; left: 20px; top: 19px; width: 4px; height: 13px; border-radius: 2px; background: var(--su-c, var(--su-red)); }
-  .su-tile .su-tlabel { padding-left: 12px; font-weight: 700; color: var(--color-fg); letter-spacing: .04em; text-transform: uppercase; font-size: 11px; }
-  .su-card h2 { position: relative; padding-left: 12px; }
-  .su-card h2::before { content: ""; position: absolute; left: 0; top: .25em; width: 4px; height: .95em; border-radius: 2px; background: var(--su-red); }
-  .su-tile { display: flex; flex-direction: column; gap: var(--cds-gap-xs); }
-  .su-tlabel { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
-  .su-big { font-weight: 700; font-size: clamp(24px, 3vw, 30px); margin-top: 6px; font-variant-numeric: tabular-nums; line-height: 1.1; min-height: 1.1em; }
-  .su-sub { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
-  .su-sub span { color: var(--color-fg); }
-  .su-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); gap: var(--cds-gap-md); }
-  .su-card h2 { font-size: 16px; font-weight: 700; margin: 0; }
-  .su-note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: var(--cds-gap-xs) 0 var(--cds-gap-md); }
-  .su-cardhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: var(--cds-gap-sm); }
-  .su-legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-bottom: var(--cds-gap-sm); }
-  .su-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
-  .su-chart { position: relative; min-height: 260px; }
-  .su-chart.su-rank { min-height: 420px; }
-  .su-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; z-index: 2; }
-  .su-tip .d { color: var(--cds-text-secondary); margin-bottom: 2px; }
-  .su-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
-  .su-tablebox { max-height: 34rem; overflow: auto; }
-  .su-table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
-  .su-table th { position: sticky; top: 0; background: var(--color-panel); text-transform: uppercase; font-size: 10.5px; letter-spacing: .04em; text-align: right; padding: 0; border-bottom: 1px solid var(--color-border-line); z-index: 1; }
-  .su-table th:first-child, .su-table td:first-child { text-align: left; }
-  .su-table th button { all: unset; cursor: pointer; display: block; padding: var(--cds-pad-xs) var(--cds-pad-sm); color: var(--color-fg-muted); font-weight: var(--cds-font-weight-medium); white-space: nowrap; }
-  .su-table th[aria-sort] button { color: var(--color-fg); }
-  .su-table td { padding: var(--cds-pad-xs) var(--cds-pad-sm); text-align: right; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
-  .su-table td:first-child { font-weight: 500; }
-  .su-table tbody tr:hover td { background: #1f2330; }
-  .su-table td.z { color: var(--color-fg-muted); }
-  .su-search { font: inherit; font-size: var(--cds-font-size-caption); padding: var(--cds-pad-xs) var(--cds-pad-sm); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: var(--color-bg); color: var(--color-fg); min-width: 12rem; }
-  .su-details { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
-  .su-details { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 14px; padding: 16px 20px; }
-  .su-details summary { cursor: pointer; color: var(--color-fg); font-size: 15px; font-weight: 700; }
-  .su-details dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--cds-gap-xs) var(--cds-gap-md); margin: var(--cds-gap-md) 0 0; }
-  .su-details dt { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
-  .su-details dd { margin: 0; }
-  .su-ems-open { font: inherit; font-size: 13px; font-weight: 700; color: #fff; background: var(--su-red); border: 0; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
-  .su-ems-open:hover { filter: brightness(1.1); }
-  .su-modal { position: fixed; inset: 0; z-index: 50; background: rgba(5, 6, 10, .72); display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; overflow: auto; }
-  .su-modal[hidden] { display: none; }
-  .su-modal-box { width: min(100%, 44rem); background: #0f1117; border: 1px solid var(--color-border-line); border-top: 6px solid var(--su-red); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: var(--cds-gap-md); }
-  .su-modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--cds-gap-md); }
-  .su-modal-head h2 { font-size: 22px; font-weight: 700; margin: 0; }
-  .su-close { all: unset; cursor: pointer; font-size: 22px; line-height: 1; color: var(--color-fg-muted); padding: 2px 6px; border-radius: 6px; }
-  .su-close:hover { color: var(--color-fg); background: var(--color-panel); }
-  .su-ems-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--cds-gap-sm); }
-  .su-ems-tiles .su-big { color: var(--su-red); }
-  .su-ems-tiles .su-big::after { content: " $"; font-size: .6em; color: var(--su-amber); }
-  .su-ems-table td.m { color: var(--su-red); font-weight: 700; }
-  [data-dash-source-state=empty] { color: transparent; }
-  [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
-  .su-fail { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: inherit; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
-  .su-fail::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
-  @media (max-width: 640px) { .su-hide-sm { display: none; } }
-</style>
+<div class="frame">
+  <div class="crumb"><img src="logo.png" alt=""> Unity Legacy RP / Staff panel / <b>Streamers &amp; animateurs</b></div>
+  <div class="wrap">
 
-<div class="su" lang="fr">
-  <header class="su-head" id="haut">
-    <div class="su-brand">
-      <img class="su-logo" src="logo.png" alt="Unity Legacy RP" width="64" height="64">
-      <div>
-      <p class="su-kicker">UNITY LEGACY RP  ·  STAFF PANEL  ·  RAPPORT</p>
-      <h1 class="su-title">Streamers &amp; animateurs - commandes staff</h1>
-      <p class="su-lede">Sur <span data-draw="perphrase">—</span>, <b data-draw="top" data-source="top" data-field="pseudo" data-where="periode=3 mois" class="dash-skeleton">—</b> est celui qui a fait le plus de /revive (<b data-draw="top" data-source="top" data-field="revive" data-where="periode=3 mois" class="dash-skeleton su-acc">—</b>), parmi les <span data-draw="rolephrase">—</span>.</p>
+    <div class="top">
+      <h1>Suivi staff <span>streamers &amp; animateurs</span></h1>
+      <div class="top-r">
+        <label class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Rechercher un joueur" aria-label="Rechercher un joueur"></label>
+        <div class="chip-time"><span class="dot"></span>Mis à jour le <b id="maj">—</b></div>
+        <button class="btn-w" id="open-ems" type="button">Perte des EMS</button>
       </div>
     </div>
-    <div class="su-right">
-    <button type="button" class="su-ems-open">Perte des EMS</button>
-    <div class="su-badge"><small>MIS À JOUR LE</small><span data-draw="extrait" data-source="extraction" data-field="extrait_texte">—</span></div>
-    <label class="su-ctrl">Rôle
-      <select class="dash-select su-role" aria-label="Rôle">
-        <option value="Tous">Tous</option>
-        <option value="Streamer">Streamers</option>
-        <option value="Animateur">Animateurs</option>
-      </select>
-    </label>
-    <label class="su-ctrl">Période
-      <select class="dash-select su-periode" aria-label="Période">
-        <option value="3 mois">3 mois</option>
-        <option value="30 jours">30 jours</option>
-        <option value="7 jours">7 jours</option>
-      </select>
-    </label>
-    </div>
-  </header>
 
-  <section class="su-tiles" id="totaux">
-    <div class="su-tile" style="--su-c: var(--su-red)"><span class="su-tlabel">/revive · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="revive" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="revive_jour" data-where="periode=3 mois">—</span> par jour</span></div>
-    <div class="su-tile" style="--su-c: var(--su-amber)"><span class="su-tlabel">/revivezone · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="revivezone" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="revivezone_jour" data-where="periode=3 mois">—</span> par jour</span></div>
-    <div class="su-tile" style="--su-c: var(--su-blue)"><span class="su-tlabel">Spawn véhicule · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="spawn" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="spawn_jour" data-where="periode=3 mois">—</span> par jour</span></div>
-    <div class="su-tile" style="--su-c: var(--su-red)"><span class="su-tlabel">/heal · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="heal" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="heal_jour" data-where="periode=3 mois">—</span> par jour</span></div>
-    <div class="su-tile" style="--su-c: var(--su-amber)"><span class="su-tlabel">/repairveh · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="repairveh" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="repairveh_jour" data-where="periode=3 mois">—</span> par jour</span></div>
-    <div class="su-tile" style="--su-c: var(--su-blue)"><span class="su-tlabel">Téléportations · <span data-draw="per">—</span></span><span class="su-big dash-skeleton" data-draw="tot" data-source="totaux" data-field="tp" data-where="periode=3 mois">—</span><span class="su-sub">environ <span data-draw="tot" data-source="totaux" data-field="tp_jour" data-where="periode=3 mois">—</span> par jour</span></div>
-  </section>
-
-  <section class="su-card" id="evolution">
-    <h2>Évolution par semaine</h2>
-    <p class="su-note">Total des <span data-draw="rolephrase">—</span>, par semaine (du lundi), pour les semaines qui touchent <span data-draw="perphrase">—</span>. La dernière semaine est en cours.</p>
-    <div class="su-legend"><span><i class="su-sw" data-i="0"></i>/revive</span><span><i class="su-sw" data-i="1"></i>/revivezone</span><span><i class="su-sw" data-i="2"></i>Spawn véhicule</span></div>
-    <div class="su-chart" data-draw="weekly" data-source="semaines extraction"></div>
-  </section>
-
-  <div class="su-grid">
-    <section class="su-card" id="classement">
-      <div class="su-cardhead">
-        <div>
-          <h2>Classement</h2>
-          <p class="su-note">Top 15 des <span data-draw="rolephrase">—</span>, sur la période choisie en haut.</p>
+    <div class="bar">
+      <p class="lede" id="lede">Chargement…</p>
+      <div class="segs">
+        <div class="seg" id="seg-role" role="group" aria-label="Rôle">
+          <button type="button" data-v="Tous">Tous</button><button type="button" data-v="Streamer">Streamers</button><button type="button" data-v="Animateur">Animateurs</button>
         </div>
-        <select class="dash-select su-metrique" aria-label="Commande">
-          <option value="revive">/revive</option>
-          <option value="revivezone">/revivezone</option>
-          <option value="spawn">Spawn véhicule</option>
-          <option value="heal">/heal</option>
-          <option value="repairveh">/repairveh</option>
-          <option value="dve">Suppression véhicule (/dve)</option>
-          <option value="noclip">/noclip</option>
-          <option value="tp">Téléportations</option>
-        </select>
-      </div>
-      <div class="su-chart su-rank" data-draw="rank" data-source="streamers"></div>
-    </section>
-
-    <section class="su-card" id="rayons">
-      <h2>/revivezone par rayon</h2>
-      <p class="su-note">Les <span data-draw="rolephrase">—</span>, sur <span data-draw="perphrase">—</span>. Le rayon est le chiffre tapé après /revivezone.</p>
-      <div class="su-chart" data-draw="zones" data-source="zones"></div>
-    </section>
-  </div>
-
-  <section class="su-card" id="detail">
-    <div class="su-cardhead">
-      <div>
-        <h2>Détail par joueur</h2>
-        <p class="su-note">Tous les <span data-draw="rolephrase">—</span>, sur la période choisie en haut. Clique sur une colonne pour trier.</p>
-      </div>
-      <input class="su-search" type="search" placeholder="Rechercher un joueur" aria-label="Rechercher un joueur">
-    </div>
-    <div class="su-tablebox">
-      <table class="su-table" data-source="streamers" data-row-key="pseudo,periode">
-        <thead><tr>
-          <th data-field="pseudo"><button type="button" data-k="pseudo">Joueur</button></th>
-          <th data-field="role"><button type="button" data-k="role">Rôle</button></th>
-          <th data-field="revive"><button type="button" data-k="revive">/revive</button></th>
-          <th data-field="revivezone"><button type="button" data-k="revivezone">/revivezone</button></th>
-          <th data-field="spawn"><button type="button" data-k="spawn">Spawn véh.</button></th>
-          <th data-field="heal"><button type="button" data-k="heal">/heal</button></th>
-          <th data-field="repairveh"><button type="button" data-k="repairveh">/repairveh</button></th>
-          <th data-field="dve" class="su-hide-sm"><button type="button" data-k="dve">/dve</button></th>
-          <th data-field="noclip" class="su-hide-sm"><button type="button" data-k="noclip">/noclip</button></th>
-          <th data-field="tp" class="su-hide-sm"><button type="button" data-k="tp">TP</button></th>
-          <th data-field="kick" class="su-hide-sm"><button type="button" data-k="kick">/kick</button></th>
-        </tr></thead>
-        <tbody data-draw="table"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <div class="su-modal" id="perte-ems" hidden role="dialog" aria-modal="true" aria-labelledby="su-ems-title">
-    <div class="su-modal-box">
-      <div class="su-modal-head">
-        <div>
-          <p class="su-kicker">UNITY LEGACY RP  ·  STAFF PANEL</p>
-          <h2 id="su-ems-title">Perte des EMS</h2>
+        <div class="seg" id="seg-per" role="group" aria-label="Période">
+          <button type="button" data-v="7 jours">7J</button><button type="button" data-v="30 jours">30J</button><button type="button" data-v="3 mois">3M</button>
         </div>
-        <button type="button" class="su-close" aria-label="Fermer">×</button>
       </div>
-      <p class="su-note">Chaque /revive fait par un streamer ou un animateur est un revive que les EMS n'ont pas facturé (3 500 $), et chaque /heal un soin non facturé (1 200 $). Les /revivezone ne sont pas comptées.</p>
-      <div class="su-ems-tiles">
-        <div class="su-tile" style="--su-c: var(--su-red)"><span class="su-tlabel">3 mois</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=3 mois">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=3 mois">—</span> revives · <span data-draw="ems-tot" data-source="pertes_totaux" data-field="heal" data-where="periode=3 mois">—</span> soins</span></div>
-        <div class="su-tile" style="--su-c: var(--su-amber)"><span class="su-tlabel">30 jours</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=30 jours">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=30 jours">—</span> revives · <span data-draw="ems-tot" data-source="pertes_totaux" data-field="heal" data-where="periode=30 jours">—</span> soins</span></div>
-        <div class="su-tile" style="--su-c: var(--su-blue)"><span class="su-tlabel">7 jours</span><span class="su-big" data-draw="ems-tot" data-source="pertes_totaux" data-field="perte" data-where="periode=7 jours">—</span><span class="su-sub"><span data-draw="ems-tot" data-source="pertes_totaux" data-field="revive" data-where="periode=7 jours">—</span> revives · <span data-draw="ems-tot" data-source="pertes_totaux" data-field="heal" data-where="periode=7 jours">—</span> soins</span></div>
+    </div>
+
+    <section class="kpis" id="kpis"></section>
+
+    <div class="g1">
+      <section class="card ems">
+        <div class="ico"><img src="logo.png" alt=""></div>
+        <div class="amount" id="ems-amount">—</div>
+        <p class="note" id="ems-note">Perte des EMS sur la période</p>
+        <div class="split">
+          <div>/revive × 3 500 $ <b id="ems-rev">—</b></div>
+          <div>/heal × 1 200 $ <b id="ems-heal">—</b></div>
+        </div>
+        <button class="btn-w" type="button" id="open-ems-2">Voir le détail par joueur</button>
+      </section>
+
+      <section class="card chartcard">
+        <div class="chead">
+          <div>
+            <h2>Évolution par semaine <small id="wk-sub">—</small></h2>
+            <div class="legend"><span><i style="background:var(--violet)"></i>/revive</span><span><i style="background:var(--amber)"></i>/revivezone</span><span><i style="background:var(--blue)"></i>Spawn véhicule</span></div>
+          </div>
+        </div>
+        <div class="chart" id="weekly"></div>
+        <div class="cfoot">
+          <div class="big" id="big-rev">—<small>/revive</small></div>
+          <div class="delta" id="delta"></div>
+        </div>
+      </section>
+
+      <section class="card rank">
+        <h2>Classement</h2>
+        <div class="seg" id="seg-met" role="group" aria-label="Commande">
+          <button type="button" data-v="revive">Revive</button><button type="button" data-v="revivezone">Zone</button><button type="button" data-v="spawn">Spawn</button><button type="button" data-v="heal">Heal</button>
+        </div>
+        <div class="rlist" id="rlist"></div>
+      </section>
+    </div>
+
+    <div class="g2">
+      <section class="card spot">
+        <div class="row1"><div class="av" id="spot-av">—</div><button class="arrow" type="button" id="spot-go" aria-label="Voir dans le tableau"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M8 7h9v9"/></svg></button></div>
+        <h3 id="spot-name">—</h3>
+        <div class="sub" id="spot-sub">—</div>
+        <div class="kv">
+          <div>/revive <b id="spot-rev">—</b></div>
+          <div>/heal <b id="spot-heal">—</b></div>
+          <div>Perte EMS <b id="spot-loss">—</b></div>
+        </div>
+        <div class="btns"><button class="btn-d" type="button" id="spot-table">Voir le joueur</button><button class="btn-w" type="button" id="open-ems-3">Perte EMS</button></div>
+      </section>
+
+      <section class="card">
+        <h2>/revivezone par rayon</h2>
+        <p class="note">Le rayon est le chiffre tapé après /revivezone.</p>
+        <div class="zchart" id="zones"></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="chead">
+        <div>
+          <h2>Détail par joueur</h2>
+          <p class="note">Clique sur une colonne pour trier.</p>
+        </div>
+        <span class="count" id="count">—</span>
       </div>
-      <p class="su-note">Par joueur, sur la période et le rôle choisis en haut.</p>
-      <div class="su-tablebox">
-        <table class="su-table su-ems-table" data-source="pertes" data-row-key="pseudo,periode">
+      <div class="tbox">
+        <table id="table">
           <thead><tr>
-            <th data-field="pseudo"><button type="button" tabindex="-1">Joueur</button></th>
-            <th data-field="revive"><button type="button" tabindex="-1">/revive</button></th>
-            <th data-field="heal"><button type="button" tabindex="-1">/heal</button></th>
-            <th data-field="perte"><button type="button" tabindex="-1">Perte EMS</button></th>
+            <th data-k="pseudo"><button type="button">Joueur</button></th>
+            <th data-k="role" class="hide-sm"><button type="button">Rôle</button></th>
+            <th data-k="revive"><button type="button">/revive</button></th>
+            <th data-k="revivezone"><button type="button">/revivezone</button></th>
+            <th data-k="spawn"><button type="button">Spawn véh.</button></th>
+            <th data-k="heal"><button type="button">/heal</button></th>
+            <th data-k="repairveh" class="hide-sm"><button type="button">/repairveh</button></th>
+            <th data-k="dve" class="hide-sm"><button type="button">/dve</button></th>
+            <th data-k="noclip" class="hide-sm"><button type="button">/noclip</button></th>
+            <th data-k="tp" class="hide-sm"><button type="button">TP</button></th>
+            <th data-k="kick" class="hide-sm"><button type="button">/kick</button></th>
+            <th data-k="perte"><button type="button">Perte EMS</button></th>
           </tr></thead>
-          <tbody data-draw="ems-table"></tbody>
+          <tbody></tbody>
         </table>
       </div>
+    </section>
+
+
+    <div class="foot">Unity Legacy RP - Rapport staff · données des logs du panel staff</div>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="m-title">
+  <div class="mbox">
+    <div class="mhead">
+      <div>
+        <h2 id="m-title">Perte des EMS</h2>
+        <p class="note">Chaque /revive d'un streamer ou d'un animateur est un revive que les EMS n'ont pas facturé (3 500 $), et chaque /heal un soin non facturé (1 200 $). Les /revivezone ne sont pas comptées.</p>
+      </div>
+      <button class="arrow" type="button" id="m-close" aria-label="Fermer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="mtiles" id="m-tiles"></div>
+    <p class="note" id="m-note">—</p>
+    <div class="mtable">
+      <table><thead><tr><th><button type="button">Joueur</button></th><th class="hide-sm"><button type="button">Rôle</button></th><th><button type="button">/revive</button></th><th><button type="button">/heal</button></th><th><button type="button">Perte EMS</button></th></tr></thead><tbody id="m-body"></tbody></table>
     </div>
   </div>
 </div>
 
-
 <script>
-  d3.formatDefaultLocale({ decimal: ',', thousands: ' ', grouping: [3], currency: ['', ' €'] });
-  window.suFmt = d3.format(',');
-  window.suPal = ['#a855f7', '#f59e0b', '#60a5fa'];
-  window.suCats = ['revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'giveveh', 'kick', 'unban'];
-  window.suNames = { revive: '/revive', revivezone: '/revivezone', spawn: 'Spawn véhicule', heal: '/heal', repairveh: '/repairveh', dve: '/dve', noclip: '/noclip', tp: 'Téléportations', giveveh: '/giveveh', kick: '/kick' };
-  window.suSort = { k: 'revive', dir: -1 };
-  window.suRole = () => dash.params().role || 'Tous';
-  window.suIn = (r, g) => g === 'Tous' || String(r.role || '').includes(g);
-  window.suRolePhrase = { Tous: 'streamers et animateurs', Streamer: 'streamers partenaires', Animateur: 'animateurs' };
-  window.suQuery = '';
+(() => {
+  const CATS = ['revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'giveveh', 'kick', 'unban'];
+  const PAL = { revive: '#a855f7', revivezone: '#f59e0b', spawn: '#60a5fa' };
+  const PERS = ['7 jours', '30 jours', '3 mois'];
+  const PHRASE = { '3 mois': 'les 3 derniers mois', '30 jours': 'les 30 derniers jours', '7 jours': 'les 7 derniers jours' };
+  const ROLEP = { Tous: 'streamers et animateurs', Streamer: 'streamers partenaires', Animateur: 'animateurs' };
+  const NAMES = { revive: '/revive', revivezone: '/revivezone', spawn: 'Spawn véhicule', heal: '/heal' };
+  const loc = d3.formatLocale({ decimal: ',', thousands: ' ', grouping: [3], currency: ['', ' $'] });
+  const F = loc.format(',');
+  const st = { role: 'Tous', per: '3 mois', met: 'revive', sort: { k: 'revive', dir: -1 }, q: '' };
+  let D = null;
+  const $ = (s) => document.querySelector(s);
+  const loss = (r) => Number(r.revive) * 3500 + Number(r.heal) * 1200;
+  const inRole = (r) => st.role === 'Tous' || String(r.role || '').includes(st.role);
+  const rows = (per = st.per) => D.streamers.filter((r) => r.periode === per && inRole(r));
+  const sum = (rs, k) => d3.sum(rs, (r) => Number(r[k]));
+  const initials = (n) => { const w = String(n).replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).filter(Boolean); return ((w.length > 1 && !/\d/.test(w[1][0]) ? w[0][0] + w[1][0] : (w[0] || '?').slice(0, 2))).toUpperCase(); };
+  const roleChip = (r) => { const s = document.createElement('span'); s.className = 'role ' + (r.includes('Streamer') && r.includes('Animateur') ? '' : r.includes('Streamer') ? 's' : 'a'); s.textContent = r.includes('+') ? 'Streamer + Anim' : r; return s; };
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
 
-  dash.calc('totaux', {
-    title: 'Totaux par période',
-    description: 'Somme des commandes pour chaque rôle (Tous, Streamer, Animateur) et chaque période, et la moyenne par jour sur les jours couverts par les logs.',
-    inputs: ['streamers', 'extraction'],
-    fn: (streamers, extraction) => {
-      const cats = ['revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'giveveh', 'kick', 'unban'];
-      const jours = { '3 mois': Number(extraction[0]?.jours_3_mois) || 92, '30 jours': 30, '7 jours': 7 };
-      const out = {};
-      for (const r of streamers) {
-        for (const g of ['Tous', 'Streamer', 'Animateur']) {
-          if (g !== 'Tous' && !String(r.role || '').includes(g)) continue;
-          const key = g + '|' + r.periode;
-          const o = out[key] || (out[key] = { groupe: g, periode: r.periode });
-          for (const c of cats) o[c] = (o[c] || 0) + Number(r[c]);
-        }
-      }
-      for (const o of Object.values(out)) for (const c of cats) o[c + '_jour'] = Math.round(o[c] / jours[o.periode]);
-      return Object.values(out);
-    },
-  });
-
-  dash.calc('top', {
-    title: 'Joueur avec le plus de /revive',
-    description: 'Pour chaque rôle et chaque période, le joueur qui a fait le plus de /revive.',
-    inputs: ['streamers'],
-    fn: (streamers) => {
-      const out = {};
-      for (const r of streamers) {
-        const v = Number(r.revive);
-        for (const g of ['Tous', 'Streamer', 'Animateur']) {
-          if (g !== 'Tous' && !String(r.role || '').includes(g)) continue;
-          const key = g + '|' + r.periode;
-          if (!out[key] || v > out[key].revive) out[key] = { groupe: g, periode: r.periode, pseudo: r.pseudo, revive: v };
-        }
-      }
-      return Object.values(out);
-    },
-  });
-
-  dash.calc('pertes', {
-    title: 'Perte des EMS par joueur',
-    description: 'Pour chaque joueur et chaque période : /revive × 3 500 $ + /heal × 1 200 $.',
-    inputs: ['streamers'],
-    fn: (streamers) => streamers.map((r) => ({ pseudo: r.pseudo, role: r.role, periode: r.periode, revive: Number(r.revive), heal: Number(r.heal), perte: Number(r.revive) * 3500 + Number(r.heal) * 1200 })),
-  });
-
-  dash.calc('pertes_totaux', {
-    title: 'Perte des EMS, total',
-    description: 'Total pour chaque rôle et chaque période : /revive × 3 500 $ + /heal × 1 200 $.',
-    inputs: ['pertes'],
-    fn: (pertes) => {
-      const out = {};
-      for (const r of pertes) {
-        for (const g of ['Tous', 'Streamer', 'Animateur']) {
-          if (g !== 'Tous' && !String(r.role || '').includes(g)) continue;
-          const key = g + '|' + r.periode;
-          const o = out[key] || (out[key] = { groupe: g, periode: r.periode, revive: 0, heal: 0, perte: 0 });
-          o.revive += r.revive; o.heal += r.heal; o.perte += r.perte;
-        }
-      }
-      return Object.values(out);
-    },
-  });
-
-  function suFail(el, st) {
-    if (st === 'error' || st === 'connect' || st === 'declined') {
-      const d = document.createElement('div');
-      d.className = 'su-fail';
-      d.textContent = 'Échec du chargement';
-      el.replaceChildren(d);
-      return true;
-    }
-    return false;
-  }
-  window.suFail = suFail;
-
-  document.querySelectorAll('.su-sw').forEach((s) => { s.style.background = window.suPal[Number(s.dataset.i)]; });
-
-  document.querySelectorAll('.su-periode').forEach((sel) => {
-    sel.addEventListener('change', () => dash.setParams({ periode: sel.value }));
-  });
-  document.querySelectorAll('.su-role').forEach((sel) => {
-    sel.addEventListener('change', () => dash.setParams({ role: sel.value }));
-  });
-  document.querySelectorAll('.su-metrique').forEach((sel) => {
-    sel.addEventListener('change', () => dash.setParams({ metrique: sel.value }));
-  });
-  document.querySelectorAll('.su-search').forEach((inp) => {
-    inp.addEventListener('input', () => { window.suQuery = inp.value.trim().toLowerCase(); dash.draw('table'); });
-  });
-  document.querySelectorAll('.su-table th button').forEach((b) => {
-    b.addEventListener('click', () => {
-      const k = b.dataset.k;
-      if (window.suSort.k === k) window.suSort.dir *= -1;
-      else window.suSort = { k, dir: k === 'pseudo' || k === 'role' ? 1 : -1 };
-      document.querySelectorAll('.su-table th').forEach((th) => {
-        if (th.querySelector('button')?.dataset.k === window.suSort.k) th.setAttribute('aria-sort', window.suSort.dir > 0 ? 'ascending' : 'descending');
-        else th.removeAttribute('aria-sort');
+  function segs() {
+    for (const [id, key] of [['#seg-role', 'role'], ['#seg-per', 'per'], ['#seg-met', 'met']]) {
+      document.querySelectorAll(id + ' button').forEach((b) => {
+        b.setAttribute('aria-pressed', String(b.dataset.v === st[key]));
+        b.onclick = () => { st[key] = b.dataset.v; render(); };
       });
-      dash.draw('table');
-    });
-  });
-
-  const suModal = () => document.querySelectorAll('.su-modal');
-  document.querySelectorAll('.su-ems-open').forEach((b) => b.addEventListener('click', () => suModal().forEach((m) => { m.hidden = false; })));
-  document.querySelectorAll('.su-close').forEach((b) => b.addEventListener('click', () => suModal().forEach((m) => { m.hidden = true; })));
-  suModal().forEach((m) => m.addEventListener('click', (e) => { if (e.target === m) m.hidden = true; }));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') suModal().forEach((m) => { m.hidden = true; }); });
-
-  dash.onData(() => {
-    const p = dash.params();
-    document.querySelectorAll('.su-periode').forEach((s) => { s.value = p.periode || '3 mois'; });
-    document.querySelectorAll('.su-role').forEach((s) => { s.value = p.role || 'Tous'; });
-    document.querySelectorAll('.su-metrique').forEach((s) => { s.value = p.metrique || 'revive'; });
-    document.querySelectorAll('.su-table th').forEach((th) => {
-      const k = th.querySelector('button')?.dataset.k;
-      if (k === window.suSort.k) th.setAttribute('aria-sort', window.suSort.dir > 0 ? 'ascending' : 'descending');
-      else th.removeAttribute('aria-sort');
-    });
-  });
-</script>
-
-<script>
-  window.suPer = () => dash.params().periode || '3 mois';
-  window.suPhrase = { '3 mois': 'les 3 derniers mois', '30 jours': 'les 30 derniers jours', '7 jours': 'les 7 derniers jours' };
-
-  dash.draw('extrait', (el) => {
-    const d = dash.data('extraction');
-    el.textContent = d.status === 'ok' && d.data[0] ? d.data[0].extrait_texte : '—';
-  });
-
-  dash.draw('per', (el) => { el.textContent = window.suPer(); });
-  dash.draw('rolephrase', (el) => { el.textContent = window.suRolePhrase[window.suRole()]; });
-  dash.draw('perphrase', (el) => { el.textContent = window.suPhrase[window.suPer()]; });
-
-  dash.draw('top', (el) => {
-    const per = window.suPer(), g = window.suRole();
-    el.dataset.where = 'groupe=' + g + '&periode=' + per;
-    const d = dash.data('top');
-    if (d.status !== 'ok') { el.textContent = '—'; if (d.status !== 'loading') el.classList.remove('dash-skeleton'); return; }
-    el.classList.remove('dash-skeleton');
-    const row = d.data.find((r) => r.periode === per && r.groupe === g);
-    const v = row ? row[el.dataset.field] : '—';
-    el.textContent = typeof v === 'number' ? window.suFmt(v) : v;
-  });
-
-  dash.draw('ems-tot', (el) => {
-    const d = dash.data('pertes_totaux');
-    if (d.status !== 'ok') { el.textContent = '—'; return; }
-    const per = new URLSearchParams(el.dataset.where).get('periode'), g = window.suRole();
-    el.dataset.where = 'groupe=' + g + '&periode=' + per;
-    const row = d.data.find((r) => r.periode === per && r.groupe === g);
-    el.textContent = row ? window.suFmt(row[el.dataset.field]) : '—';
-  });
-
-  dash.draw('ems-table', (tb) => {
-    const d = dash.data('pertes');
-    if (d.status !== 'ok') { tb.replaceChildren(); return; }
-    const per = dash.params().periode || '3 mois';
-    const rows = d.data.filter((r) => r.periode === per && r.perte > 0 && window.suIn(r, window.suRole())).sort((a, b) => b.perte - a.perte);
-    tb.replaceChildren(...rows.map((r) => {
-      const tr = document.createElement('tr');
-      tr.dataset.key = encodeURIComponent(r.pseudo) + ',' + encodeURIComponent(r.periode);
-      const a = document.createElement('td'); a.textContent = r.pseudo;
-      const b = document.createElement('td'); b.textContent = window.suFmt(r.revive);
-      const h = document.createElement('td'); h.textContent = window.suFmt(r.heal);
-      const c = document.createElement('td'); c.className = 'm'; c.textContent = window.suFmt(r.perte) + ' $';
-      tr.append(a, b, h, c);
-      return tr;
-    }));
-  });
-
-  dash.draw('tot', (el) => {
-    const per = window.suPer(), g = window.suRole();
-    el.dataset.where = 'groupe=' + g + '&periode=' + per;
-    const d = dash.data('totaux');
-    if (d.status !== 'ok') { el.textContent = '—'; if (d.status !== 'loading') el.classList.remove('dash-skeleton'); return; }
-    el.classList.remove('dash-skeleton');
-    const row = d.data.find((r) => r.periode === per && r.groupe === g);
-    el.textContent = row ? window.suFmt(row[el.dataset.field]) : '—';
-  });
-</script>
-
-<script>
-  function suTip(box) {
-    let tip = box.querySelector('.su-tip');
-    if (!tip) { tip = document.createElement('div'); tip.className = 'su-tip'; box.appendChild(tip); }
-    tip.style.display = 'none';
-    return {
-      show(x, y, title, lines) {
-        tip.replaceChildren();
-        const t = document.createElement('div'); t.className = 'd'; t.textContent = title; tip.appendChild(t);
-        for (const [color, name, val] of lines) {
-          const l = document.createElement('div');
-          if (color) { const i = document.createElement('i'); i.style.background = color; l.appendChild(i); }
-          l.appendChild(document.createTextNode(name + ' : ' + val));
-          tip.appendChild(l);
-        }
-        tip.style.display = 'block';
-        const bw = box.clientWidth, tw = tip.offsetWidth, th = tip.offsetHeight;
-        let left = x + 12; if (left + tw > bw) left = x - tw - 12; if (left < 0) left = 0;
-        let top = y - th - 8; if (top < 0) top = y + 12;
-        tip.style.left = left + 'px'; tip.style.top = top + 'px';
-      },
-      hide() { tip.style.display = 'none'; },
-    };
-  }
-  window.suTip = suTip;
-
-  dash.draw('weekly', (el) => {
-    const d = dash.data('semaines');
-    if (suFail(el, d.status)) return;
-    if (d.status !== 'ok') { el.replaceChildren(); return; }
-    const days = { '3 mois': 0, '30 jours': 30, '7 jours': 7 }[window.suPer()];
-    const ex = dash.data('extraction');
-    const fin = ex.status === 'ok' && ex.data[0] ? Date.parse(ex.data[0].extrait_le) : Date.now();
-    const rows = d.data.filter((r) => (r.groupe || 'Tous') === window.suRole()).map((r) => ({ ...r, date: new Date(r.semaine + 'T00:00:00Z') }))
-      .filter((r) => !days || r.date.getTime() + 7 * 864e5 > fin - days * 864e5);
-    const keys = ['revive', 'revivezone', 'spawn'];
-    const W = Math.max(el.clientWidth, 280), H = 260;
-    const ymax = d3.max(rows, (r) => d3.max(keys, (k) => Number(r[k])));
-    const y = d3.scaleLinear([0, ymax], [H - 26, 10]).nice();
-    el.replaceChildren();
-    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
-    const yAxis = svg.append('g').attr('font-size', null).attr('font-family', null).call(d3.axisLeft(y).ticks(5).tickSize(0).tickFormat(window.suFmt));
-    yAxis.select('.domain').remove();
-    yAxis.selectAll('text').attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)');
-    let lw = 0; yAxis.selectAll('text').each(function () { lw = Math.max(lw, this.getComputedTextLength()); });
-    const ml = lw + 10, mr = 12;
-    yAxis.attr('transform', `translate(${ml - 6},0)`);
-    const x = d3.scaleBand(rows.map((r) => r.semaine), [ml, W - mr]).padding(0.2);
-    svg.insert('g', ':first-child').selectAll('line').data(y.ticks(5)).join('line')
-      .attr('x1', ml).attr('x2', W - mr).attr('y1', (v) => y(v)).attr('y2', (v) => y(v))
-      .attr('stroke', 'var(--cds-chart-grid)').attr('stroke-width', 1);
-    const xs = x.bandwidth() / keys.length;
-    const fmtD = d3.utcFormat('%d/%m');
-    const every = Math.ceil(rows.length / Math.max(1, Math.floor((W - ml) / 52)));
-    svg.append('g').selectAll('text').data(rows.filter((_, i) => i % every === 0)).join('text')
-      .attr('x', (r) => x(r.semaine) + x.bandwidth() / 2).attr('y', H - 8).attr('text-anchor', 'middle')
-      .attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)').text((r) => fmtD(r.date));
-    const g = svg.append('g').selectAll('g').data(rows).join('g').attr('transform', (r) => `translate(${x(r.semaine)},0)`);
-    keys.forEach((k, i) => {
-      g.append('rect').attr('x', i * xs + 1).attr('width', Math.max(1, Math.min(xs - 2, 32)))
-        .attr('y', (r) => y(Number(r[k]))).attr('height', (r) => Math.max(0, y(0) - y(Number(r[k]))))
-        .attr('rx', 2).attr('fill', window.suPal[i]);
-    });
-    const tip = suTip(el);
-    svg.append('g').selectAll('rect').data(rows).join('rect')
-      .attr('x', (r) => x(r.semaine) - x.step() * x.paddingInner() / 2).attr('width', x.step()).attr('y', 0).attr('height', H - 26)
-      .attr('fill', 'transparent')
-      .on('mousemove', (ev, r) => {
-        const [mx, my] = d3.pointer(ev, el);
-        tip.show(mx, my, 'Semaine du ' + fmtD(r.date), keys.map((k, i) => [window.suPal[i], window.suNames[k], window.suFmt(r[k])]));
-      })
-      .on('mouseleave', () => tip.hide());
-  });
-
-  dash.draw('rank', (el) => {
-    const d = dash.data('streamers');
-    if (suFail(el, d.status)) return;
-    if (d.status !== 'ok') { el.replaceChildren(); return; }
-    const p = dash.params();
-    const per = p.periode || '3 mois', m = p.metrique || 'revive';
-    const rows = d.data.filter((r) => r.periode === per && window.suIn(r, window.suRole())).map((r) => ({ ...r, v: Number(r[m]) }))
-      .sort((a, b) => b.v - a.v).slice(0, 15);
-    const W = Math.max(el.clientWidth, 280), bh = 18, gap = 9, H = rows.length * (bh + gap) + 6;
-    el.replaceChildren();
-    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
-    const labels = svg.append('g').selectAll('text').data(rows).join('text')
-      .attr('y', (r, i) => i * (bh + gap) + bh / 2 + 4).attr('fill', 'var(--color-fg)')
-      .style('font-size', 'var(--cds-font-size-caption)').text((r) => r.pseudo);
-    let lw = 0; labels.each(function () { lw = Math.max(lw, this.getComputedTextLength()); });
-    lw = Math.min(lw, W * 0.4);
-    const vals = svg.append('g').selectAll('text').data(rows).join('text')
-      .style('font-size', 'var(--cds-font-size-caption)').style('font-variant-numeric', 'tabular-nums')
-      .attr('fill', 'var(--color-fg-muted)').text((r) => window.suFmt(r.v));
-    let vw = 0; vals.each(function () { vw = Math.max(vw, this.getComputedTextLength()); });
-    const x0 = lw + 10, x1 = W - vw - 8;
-    const x = d3.scaleLinear([0, d3.max(rows, (r) => r.v) || 1], [x0, x1]);
-    labels.attr('x', 0);
-    svg.append('g').selectAll('rect').data(rows).join('rect')
-      .attr('x', x0).attr('y', (r, i) => i * (bh + gap)).attr('height', bh).attr('rx', 3)
-      .attr('width', (r) => Math.max(0, x(r.v) - x0))
-      .attr('fill', (r, i) => (i === 0 ? window.suPal[0] : i < 3 ? window.suPal[1] : 'var(--cds-chart-muted)'));
-    vals.attr('x', (r) => x(r.v) + 6).attr('y', (r, i) => i * (bh + gap) + bh / 2 + 4);
-    if (!rows.some((r) => r.v > 0)) {
-      el.replaceChildren();
-      const n = document.createElement('div'); n.className = 'su-fail'; n.textContent = 'Aucune commande sur cette période';
-      el.appendChild(n);
     }
-  });
+  }
 
-  dash.draw('zones', (el) => {
-    const d = dash.data('zones');
-    if (suFail(el, d.status)) return;
-    if (d.status !== 'ok') { el.replaceChildren(); return; }
-    const per = window.suPer();
-    const rows = d.data.filter((r) => r.periode === per && (r.groupe || 'Tous') === window.suRole()).sort((a, b) => Number(a.ordre) - Number(b.ordre)).map((r) => ({ ...r, v: Number(r.nombre) }));
-    const W = Math.max(el.clientWidth, 280), H = 260, mb = 40;
-    el.replaceChildren();
-    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
-    const x = d3.scaleBand(rows.map((r) => r.rayon), [4, W - 4]).padding(0.25);
-    const y = d3.scaleLinear([0, d3.max(rows, (r) => r.v) || 1], [H - mb, 22]);
-    const top = d3.max(rows, (r) => r.v);
-    svg.append('g').selectAll('rect').data(rows).join('rect')
-      .attr('x', (r) => x(r.rayon) + Math.max(0, (x.bandwidth() - 32) / 2)).attr('width', Math.min(32, x.bandwidth()))
-      .attr('y', (r) => y(r.v)).attr('height', (r) => y(0) - y(r.v)).attr('rx', 3)
-      .attr('fill', (r) => (r.v === top ? window.suPal[1] : 'var(--cds-chart-muted)'));
-    svg.append('g').selectAll('text').data(rows).join('text')
-      .attr('x', (r) => x(r.rayon) + x.bandwidth() / 2).attr('y', (r) => y(r.v) - 6).attr('text-anchor', 'middle')
-      .style('font-size', 'var(--cds-font-size-caption)').style('font-variant-numeric', 'tabular-nums').attr('fill', 'var(--color-fg)')
-      .text((r) => window.suFmt(r.v));
-    const lab = svg.append('g').selectAll('text').data(rows).join('text')
-      .attr('x', (r) => x(r.rayon) + x.bandwidth() / 2).attr('y', H - mb + 16).attr('text-anchor', 'middle')
-      .style('font-size', 'var(--cds-font-size-caption)').attr('fill', 'var(--color-fg-muted)')
-      .text((r) => (r.rayon.startsWith('Autre') ? 'Autre' : r.rayon));
-    let tooWide = false; lab.each(function () { if (this.getComputedTextLength() > x.step() - 2) tooWide = true; });
-    if (tooWide) lab.attr('transform', function () { return `rotate(-35 ${this.getAttribute('x')} ${this.getAttribute('y')})`; }).attr('text-anchor', 'end');
-  });
+  function kpis() {
+    const rs = rows();
+    const jours = { '3 mois': Number(D.extraction[0]?.jours_3_mois) || 92, '30 jours': 30, '7 jours': 7 }[st.per];
+    const items = [['/revive', 'revive', '#a855f7'], ['/revivezone', 'revivezone', '#f59e0b'], ['Spawn véhicule', 'spawn', '#60a5fa'], ['/heal', 'heal', '#a855f7'], ['/repairveh', 'repairveh', '#f59e0b'], ['Téléportations', 'tp', '#60a5fa']];
+    $('#kpis').replaceChildren(...items.map(([lab, k, c]) => {
+      const d = el('div', 'kpi'); d.style.setProperty('--c', c);
+      const s = el('small'); s.append(el('i'), document.createTextNode(lab)); d.append(s);
+      const v = sum(rs, k);
+      d.append(el('div', 'v', F(v)), el('div', 's', '≈ ' + F(Math.round(v / jours)) + ' par jour'));
+      return d;
+    }));
+  }
 
-  dash.draw('table', (tb) => {
-    const d = dash.data('streamers');
-    if (d.status !== 'ok') { tb.replaceChildren(); return; }
-    const per = dash.params().periode || '3 mois';
-    const cols = ['pseudo', 'role', 'revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'kick'];
-    const hide = new Set(['dve', 'noclip', 'tp', 'kick']);
-    const { k, dir } = window.suSort;
-    const q = window.suQuery;
-    const rows = d.data.filter((r) => r.periode === per && window.suIn(r, window.suRole()) && (!q || (r.pseudo + ' ' + r.compte).toLowerCase().includes(q)))
-      .sort((a, b) => (k === 'pseudo' || k === 'role' ? dir * String(a[k] || '').localeCompare(String(b[k] || ''), 'fr') : dir * (Number(a[k]) - Number(b[k]))));
-    tb.replaceChildren(...rows.map((r) => {
-      const tr = document.createElement('tr');
-      tr.dataset.key = encodeURIComponent(r.pseudo) + ',' + encodeURIComponent(r.periode);
-      for (const c of cols) {
-        const td = document.createElement('td');
-        if (c === 'pseudo') td.textContent = r.pseudo;
-        else if (c === 'role') { td.textContent = r.role || '—'; td.className = 'z'; }
-        else { const v = Number(r[c]); td.textContent = window.suFmt(v); if (!v) td.className = 'z'; }
-        if (hide.has(c)) td.classList.add('su-hide-sm');
-        tr.appendChild(td);
+  function lede() {
+    const rs = rows();
+    const top = rs.slice().sort((a, b) => b.revive - a.revive)[0];
+    const p = $('#lede'); p.replaceChildren();
+    if (!top) { p.textContent = 'Aucune donnée.'; return; }
+    p.append('Sur ' + PHRASE[st.per] + ', ', el('b', null, top.pseudo), ' est celui qui a fait le plus de /revive (', el('span', 'acc', F(top.revive)), '), parmi les ' + ROLEP[st.role] + ' (' + rs.length + ' joueurs).');
+  }
+
+  function ems() {
+    const rs = rows();
+    const rev = sum(rs, 'revive') * 3500, heal = sum(rs, 'heal') * 1200;
+    $('#ems-amount').replaceChildren(document.createTextNode(F(rev + heal)), el('span', null, '$'));
+    $('#ems-note').textContent = 'Perte des EMS sur ' + PHRASE[st.per] + ', ' + ROLEP[st.role] + '.';
+    $('#ems-rev').textContent = F(rev) + ' $';
+    $('#ems-heal').textContent = F(heal) + ' $';
+  }
+
+  const tip = (box) => { let t = box.querySelector('.tip'); if (!t) { t = el('div', 'tip'); box.appendChild(t); } return t; };
+  function showTip(box, t, x, y, title, lines) {
+    t.replaceChildren(el('div', 'd', title));
+    for (const [c, n, v] of lines) { const l = el('div'); if (c) { const i = el('i'); i.style.background = c; l.append(i); } l.append(n + ' : ' + v); t.append(l); }
+    t.style.display = 'block';
+    const bw = box.clientWidth; let left = x + 14; if (left + t.offsetWidth > bw) left = x - t.offsetWidth - 14; t.style.left = Math.max(0, left) + 'px'; t.style.top = Math.max(0, y - t.offsetHeight - 10) + 'px';
+  }
+
+  function weekly() {
+    const box = $('#weekly');
+    const fin = Date.parse(D.extraction[0]?.extrait_le) || Date.now();
+    const days = { '3 mois': 0, '30 jours': 30, '7 jours': 7 }[st.per];
+    const all = D.semaines.filter((r) => (r.groupe || 'Tous') === st.role).map((r) => ({ ...r, date: new Date(r.semaine + 'T00:00:00Z') })).sort((a, b) => a.date - b.date);
+    const rs = all.filter((r) => !days || r.date.getTime() + 7 * 864e5 > fin - days * 864e5);
+    $('#wk-sub').textContent = PHRASE[st.per];
+    const keys = ['revive', 'revivezone', 'spawn'];
+    const W = Math.max(box.clientWidth, 280), H = 240, mb = 26;
+    box.replaceChildren();
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`);
+    const defs = svg.append('defs');
+    keys.forEach((k) => {
+      const g = defs.append('linearGradient').attr('id', 'g-' + k).attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1);
+      g.append('stop').attr('offset', '0%').attr('stop-color', PAL[k]).attr('stop-opacity', 1);
+      g.append('stop').attr('offset', '100%').attr('stop-color', PAL[k]).attr('stop-opacity', .25);
+    });
+    const ymax = d3.max(rs, (r) => d3.max(keys, (k) => +r[k])) || 1;
+    const y = d3.scaleLinear([0, ymax], [H - mb, 12]).nice();
+    const ticks = y.ticks(4);
+    const ml = 40, mr = 4;
+    const x = d3.scaleBand(rs.map((r) => r.semaine), [ml, W - mr]).paddingInner(rs.length > 4 ? .28 : .5).paddingOuter(.1);
+    svg.append('g').selectAll('line').data(ticks).join('line').attr('x1', ml).attr('x2', W - mr).attr('y1', y).attr('y2', y).attr('stroke', 'rgba(255,255,255,.06)');
+    svg.append('g').selectAll('text').data(ticks).join('text').attr('x', ml - 10).attr('y', (v) => y(v) + 4).attr('text-anchor', 'end').attr('fill', '#5e5e66').attr('font-size', 11).text((v) => F(v));
+    const bw = Math.min(26, x.bandwidth() / 3 - 3);
+    const gap = (x.bandwidth() - bw * 3) / 2;
+    const fmt = d3.utcFormat('%d/%m');
+    const g = svg.append('g').selectAll('g').data(rs).join('g').attr('transform', (r) => `translate(${x(r.semaine)},0)`);
+    keys.forEach((k, i) => {
+      g.append('rect').attr('x', i * (bw + gap / 1.5) + (x.bandwidth() - (3 * bw + 2 * gap / 1.5)) / 2).attr('width', bw)
+        .attr('y', (r) => y(+r[k])).attr('height', (r) => Math.max(0, y(0) - y(+r[k]))).attr('rx', Math.min(5, bw / 2)).attr('fill', `url(#g-${k})`);
+    });
+    svg.append('g').selectAll('text').data(rs).join('text').attr('x', (r) => x(r.semaine) + x.bandwidth() / 2).attr('y', H - 6).attr('text-anchor', 'middle').attr('fill', '#8b8b94').attr('font-size', 11.5).text((r) => fmt(r.date));
+    const t = tip(box);
+    svg.append('g').selectAll('rect').data(rs).join('rect').attr('x', (r) => x(r.semaine)).attr('width', x.bandwidth()).attr('y', 0).attr('height', H - mb).attr('fill', 'transparent')
+      .on('mousemove', (ev, r) => { const [mx, my] = d3.pointer(ev, box); showTip(box, t, mx, my, 'Semaine du ' + fmt(r.date), keys.map((k) => [PAL[k], NAMES[k], F(r[k])])); })
+      .on('mouseleave', () => { t.style.display = 'none'; });
+
+    $('#big-rev').replaceChildren(document.createTextNode(F(sum(rows(), 'revive'))), el('small', null, '/revive'));
+    const complete = all.filter((r) => r.date.getTime() + 7 * 864e5 <= fin);
+    const dl = $('#delta'); dl.replaceChildren();
+    if (complete.length >= 2) {
+      const a = +complete[complete.length - 1].revive, b = +complete[complete.length - 2].revive;
+      if (b > 0) { const pct = Math.round((a - b) / b * 100); const tag = el('b', pct < 0 ? 'dn' : '', (pct >= 0 ? '↑ ' : '↓ ') + Math.abs(pct) + '%'); dl.append(tag, document.createTextNode('/revive, dernière semaine vs précédente')); }
+    }
+  }
+
+  function rank() {
+    const rs = rows().map((r) => ({ ...r, v: +r[st.met] })).filter((r) => r.v > 0).sort((a, b) => b.v - a.v).slice(0, 15);
+    const box = $('#rlist');
+    if (!rs.length) { box.replaceChildren(el('p', 'note', 'Aucune commande sur cette période.')); return; }
+    box.replaceChildren(...rs.map((r, i) => {
+      const it = el('div', 'ritem');
+      it.append(el('div', 'av', String(i + 1)));
+      const n = el('div', 'rname'); n.append(el('b', null, r.pseudo), el('span', null, r.role.replace(' + ', ' + ')));
+      it.append(n, el('div', 'rval', F(r.v)));
+      return it;
+    }));
+  }
+
+  function table() {
+    const { k, dir } = st.sort;
+    const rs = rows().map((r) => ({ ...r, perte: loss(r) })).filter((r) => !st.q || (r.pseudo + ' ' + r.compte).toLowerCase().includes(st.q))
+      .sort((a, b) => (k === 'pseudo' || k === 'role' ? dir * String(a[k]).localeCompare(String(b[k]), 'fr') : dir * (a[k] - b[k])));
+    const maxLoss = d3.max(rs, (r) => r.perte) || 1;
+    const hide = new Set(['role', 'repairveh', 'dve', 'noclip', 'tp', 'kick']);
+    $('#table tbody').replaceChildren(...rs.map((r) => {
+      const tr = el('tr'); tr.id = 'p-' + encodeURIComponent(r.compte);
+      const w = el('td'); const who = el('div', 'who'); who.append(el('span', 'av', initials(r.pseudo)), el('b', null, r.pseudo)); w.append(who); tr.append(w);
+      const rc = el('td', 'hide-sm'); rc.append(roleChip(r.role)); tr.append(rc);
+      for (const c of ['revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'kick']) {
+        const v = +r[c]; const td = el('td', (v ? '' : 'z') + (c === 'revive' && v ? ' rv' : '') + (hide.has(c) ? ' hide-sm' : ''), F(v)); tr.append(td);
       }
+      const lt = el('td'); lt.append(el('span', 'loss' + (r.perte < maxLoss * .25 ? ' lo' : ''), F(r.perte) + ' $')); tr.append(lt);
       return tr;
     }));
-  });
-</script>
+    $('#count').textContent = rs.length + ' joueurs · ' + PHRASE[st.per];
+    document.querySelectorAll('#table th').forEach((th) => { if (th.dataset.k === k) th.setAttribute('aria-sort', dir > 0 ? 'ascending' : 'descending'); else th.removeAttribute('aria-sort'); });
+  }
 
-</div>
-<p class="su-site-foot">Unity Legacy RP - Rapport staff · données des logs du panel staff, mises à jour automatiquement</p>
+  function spot() {
+    const top = rows().map((r) => ({ ...r, perte: loss(r) })).sort((a, b) => b.revive - a.revive)[0];
+    if (!top) return;
+    $('#spot-av').textContent = initials(top.pseudo);
+    const h = $('#spot-name'); h.replaceChildren(document.createTextNode(top.pseudo + ' '), el('span', null, '@' + top.compte));
+    $('#spot-sub').textContent = 'N°1 des /revive · ' + top.role + ' · ' + PHRASE[st.per];
+    $('#spot-rev').textContent = F(top.revive);
+    $('#spot-heal').textContent = F(top.heal);
+    $('#spot-loss').textContent = F(top.perte) + ' $';
+    const go = () => { st.q = ''; $('#q').value = ''; table(); const tr = document.getElementById('p-' + encodeURIComponent(top.compte)); if (tr) { tr.scrollIntoView({ block: 'center', behavior: 'smooth' }); tr.animate([{ background: 'rgba(168,85,247,.25)' }, { background: 'transparent' }], 1600); } };
+    $('#spot-go').onclick = go; $('#spot-table').onclick = go;
+  }
+
+  function zones() {
+    const box = $('#zones');
+    const rs = D.zones.filter((r) => r.periode === st.per && (r.groupe || 'Tous') === st.role).sort((a, b) => a.ordre - b.ordre).map((r) => ({ ...r, v: +r.nombre, lab: r.rayon.startsWith('Autre') ? 'Autre' : r.rayon }));
+    const W = Math.max(box.clientWidth, 240), H = 250, mb = 22;
+    box.replaceChildren();
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('height', H).attr('viewBox', `0 0 ${W} ${H}`);
+    const x = d3.scaleBand(rs.map((r) => r.lab), [0, W]).padding(.3);
+    const mx = d3.max(rs, (r) => r.v) || 1;
+    const y = d3.scaleLinear([0, mx], [H - mb, 20]);
+    const g = svg.append('defs').append('linearGradient').attr('id', 'gz').attr('x1', 0).attr('x2', 0).attr('y1', 0).attr('y2', 1);
+    g.append('stop').attr('offset', '0%').attr('stop-color', '#f59e0b'); g.append('stop').attr('offset', '100%').attr('stop-color', '#f59e0b').attr('stop-opacity', .25);
+    svg.append('g').selectAll('rect').data(rs).join('rect').attr('x', (r) => x(r.lab)).attr('width', x.bandwidth()).attr('y', (r) => y(r.v)).attr('height', (r) => y(0) - y(r.v)).attr('rx', 5)
+      .attr('fill', (r) => (r.v === mx ? 'url(#gz)' : '#2a2a2f'));
+    svg.append('g').selectAll('text').data(rs).join('text').attr('x', (r) => x(r.lab) + x.bandwidth() / 2).attr('y', (r) => y(r.v) - 6).attr('text-anchor', 'middle').attr('font-size', 10.5).attr('fill', '#c4c4cc').text((r) => F(r.v));
+    svg.append('g').selectAll('text').data(rs).join('text').attr('x', (r) => x(r.lab) + x.bandwidth() / 2).attr('y', H - 5).attr('text-anchor', 'middle').attr('font-size', 10).attr('fill', '#5e5e66').text((r) => r.lab);
+  }
+
+  function modal() {
+    $('#m-tiles').replaceChildren(...['7 jours', '30 jours', '3 mois'].map((p) => {
+      const rs = rows(p); const rev = sum(rs, 'revive'), heal = sum(rs, 'heal');
+      const t = el('div', 'mtile'); t.setAttribute('aria-current', String(p === st.per));
+      const v = el('div', 'v'); v.append(document.createTextNode(F(rev * 3500 + heal * 1200)), el('span', null, '$'));
+      t.append(el('small', null, p.charAt(0).toUpperCase() + p.slice(1)), v, el('div', 's', F(rev) + ' revives · ' + F(heal) + ' soins'));
+      return t;
+    }));
+    $('#m-note').textContent = 'Par joueur, sur ' + PHRASE[st.per] + ', ' + ROLEP[st.role] + '.';
+    const rs = rows().map((r) => ({ ...r, perte: loss(r) })).filter((r) => r.perte > 0).sort((a, b) => b.perte - a.perte);
+    $('#m-body').replaceChildren(...rs.map((r) => {
+      const tr = el('tr');
+      const w = el('td'); const who = el('div', 'who'); who.append(el('span', 'av', initials(r.pseudo)), el('b', null, r.pseudo)); w.append(who);
+      const rc = el('td', 'hide-sm'); rc.append(roleChip(r.role));
+      const lt = el('td'); lt.append(el('span', 'loss', F(r.perte) + ' $'));
+      tr.append(w, rc, el('td', null, F(r.revive)), el('td', null, F(r.heal)), lt);
+      return tr;
+    }));
+  }
+
+  function render() {
+    segs(); kpis(); lede(); ems(); weekly(); rank(); table(); spot(); zones();
+    if (!$('#modal').hidden) modal();
+  }
+
+  const openM = () => { modal(); $('#modal').hidden = false; };
+  const closeM = () => { $('#modal').hidden = true; };
+  ['#open-ems', '#open-ems-2', '#open-ems-3'].forEach((s) => $(s).addEventListener('click', openM));
+  $('#m-close').addEventListener('click', closeM);
+  $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeM(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeM(); });
+  $('#q').addEventListener('input', (e) => { st.q = e.target.value.trim().toLowerCase(); table(); });
+  document.querySelectorAll('#table th').forEach((th) => th.querySelector('button').addEventListener('click', () => {
+    const k = th.dataset.k; if (st.sort.k === k) st.sort.dir *= -1; else st.sort = { k, dir: k === 'pseudo' || k === 'role' ? 1 : -1 }; table();
+  }));
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (D) { weekly(); zones(); } }, 150); });
+
+  (async () => {
+    const files = { streamers: 'streamers.json', semaines: 'semaines.json', zones: 'zones_periodes.json', extraction: 'extraction.json' };
+    D = {};
+    await Promise.all(Object.entries(files).map(async ([k, f]) => { D[k] = await fetch('data/' + f + '?v=' + Date.now(), { cache: 'no-store' }).then((r) => r.json()); }));
+    D.streamers.forEach((r) => { for (const c of CATS) r[c] = Number(r[c]) || 0; r.role = r.role || 'Streamer'; });
+    $('#maj').textContent = D.extraction[0]?.extrait_texte || '—';
+    render();
+  })().catch((e) => { $('#lede').textContent = 'Impossible de charger les données.'; console.error(e); });
+})();
+</script>
 </body>
 </html>
