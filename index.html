@@ -159,7 +159,7 @@
   .mbox { width: min(100%, 760px); background: var(--frame); border: 1px solid var(--line2); border-radius: 26px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
   .mhead { display: flex; justify-content: space-between; align-items: flex-start; }
   .mhead h2 { margin: 0; font-size: 26px; font-weight: 400; letter-spacing: -.02em; }
-  .mtiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .mtiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
   .mtile { padding: 16px 18px; border-radius: 18px; border: 1px solid var(--line); background: var(--card); }
   .mtile[aria-current="true"] { border-color: rgba(168,85,247,.55); background: linear-gradient(180deg, rgba(168,85,247,.12), var(--card)); }
   .mtile small { font-size: 12px; color: var(--muted); }
@@ -188,7 +188,7 @@
     .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
     .g1, .g2 { grid-template-columns: 1fr; }
     .search { width: 100%; }
-    .mtiles { grid-template-columns: 1fr; }
+    .mtiles { grid-template-columns: 1fr 1fr; }
     .hide-sm { display: none; }
   }
 </style>
@@ -214,7 +214,7 @@
           <button type="button" data-v="Tous">Tous</button><button type="button" data-v="Streamer">Streamers</button><button type="button" data-v="Animateur">Animateurs</button>
         </div>
         <div class="seg" id="seg-per" role="group" aria-label="Période">
-          <button type="button" data-v="7 jours">7J</button><button type="button" data-v="30 jours">30J</button><button type="button" data-v="3 mois">3M</button>
+          <button type="button" data-v="Aujourd'hui">Auj.</button><button type="button" data-v="7 jours">7J</button><button type="button" data-v="30 jours">30J</button><button type="button" data-v="3 mois">3M</button>
         </div>
       </div>
     </div>
@@ -331,8 +331,10 @@
 (() => {
   const CATS = ['revive', 'revivezone', 'spawn', 'heal', 'repairveh', 'dve', 'noclip', 'tp', 'giveveh', 'kick', 'unban'];
   const PAL = { revive: '#a855f7', revivezone: '#f59e0b', spawn: '#60a5fa' };
-  const PERS = ['7 jours', '30 jours', '3 mois'];
-  const PHRASE = { '3 mois': 'les 3 derniers mois', '30 jours': 'les 30 derniers jours', '7 jours': 'les 7 derniers jours' };
+  const TODAY = "Aujourd'hui";
+  const PERS = [TODAY, '7 jours', '30 jours', '3 mois'];
+  const PHRASE = { '3 mois': 'les 3 derniers mois', '30 jours': 'les 30 derniers jours', '7 jours': 'les 7 derniers jours', [TODAY]: "aujourd'hui (depuis 00h, heure française)" };
+  const START = { '3 mois': 'Sur les 3 derniers mois', '30 jours': 'Sur les 30 derniers jours', '7 jours': 'Sur les 7 derniers jours', [TODAY]: "Aujourd'hui (depuis 00h, heure française)" };
   const ROLEP = { Tous: 'streamers et animateurs', Streamer: 'streamers partenaires', Animateur: 'animateurs' };
   const NAMES = { revive: '/revive', revivezone: '/revivezone', spawn: 'Spawn véhicule', heal: '/heal' };
   const loc = d3.formatLocale({ decimal: ',', thousands: ' ', grouping: [3], currency: ['', ' $'] });
@@ -359,13 +361,16 @@
 
   function kpis() {
     const rs = rows();
-    const jours = { '3 mois': Number(D.extraction[0]?.jours_3_mois) || 92, '30 jours': 30, '7 jours': 7 }[st.per];
+    const ex = D.extraction[0] || {};
+    const heures = Math.max(1, (Date.parse(ex.extrait_le) - Date.parse(ex.debut_jour)) / 36e5 || 1);
+    const isToday = st.per === TODAY;
+    const jours = isToday ? heures : { '3 mois': Number(ex.jours_3_mois) || 92, '30 jours': 30, '7 jours': 7 }[st.per];
     const items = [['/revive', 'revive', '#a855f7'], ['/revivezone', 'revivezone', '#f59e0b'], ['Spawn véhicule', 'spawn', '#60a5fa'], ['/heal', 'heal', '#a855f7'], ['/repairveh', 'repairveh', '#f59e0b'], ['Téléportations', 'tp', '#60a5fa']];
     $('#kpis').replaceChildren(...items.map(([lab, k, c]) => {
       const d = el('div', 'kpi'); d.style.setProperty('--c', c);
       const s = el('small'); s.append(el('i'), document.createTextNode(lab)); d.append(s);
       const v = sum(rs, k);
-      d.append(el('div', 'v', F(v)), el('div', 's', '≈ ' + F(Math.round(v / jours)) + ' par jour'));
+      d.append(el('div', 'v', F(v)), el('div', 's', '≈ ' + F(Math.round(v / jours)) + (isToday ? ' par heure' : ' par jour')));
       return d;
     }));
   }
@@ -375,7 +380,8 @@
     const top = rs.slice().sort((a, b) => b.revive - a.revive)[0];
     const p = $('#lede'); p.replaceChildren();
     if (!top) { p.textContent = 'Aucune donnée.'; return; }
-    p.append('Sur ' + PHRASE[st.per] + ', ', el('b', null, top.pseudo), ' est celui qui a fait le plus de /revive (', el('span', 'acc', F(top.revive)), '), parmi les ' + ROLEP[st.role] + ' (' + rs.length + ' joueurs).');
+    if (!top.revive) { p.textContent = START[st.per] + ', aucun /revive pour les ' + ROLEP[st.role] + '.'; return; }
+    p.append(START[st.per] + ', ', el('b', null, top.pseudo), ' est celui qui a fait le plus de /revive (', el('span', 'acc', F(top.revive)), '), parmi les ' + ROLEP[st.role] + ' (' + rs.length + ' joueurs).');
   }
 
   function ems() {
@@ -398,10 +404,19 @@
   function weekly() {
     const box = $('#weekly');
     const fin = Date.parse(D.extraction[0]?.extrait_le) || Date.now();
+    const isToday = st.per === TODAY;
     const days = { '3 mois': 0, '30 jours': 30, '7 jours': 7 }[st.per];
     const all = D.semaines.filter((r) => (r.groupe || 'Tous') === st.role).map((r) => ({ ...r, date: new Date(r.semaine + 'T00:00:00Z') })).sort((a, b) => a.date - b.date);
-    const rs = all.filter((r) => !days || r.date.getTime() + 7 * 864e5 > fin - days * 864e5);
-    $('#wk-sub').textContent = PHRASE[st.per];
+    const fmt = d3.utcFormat('%d/%m');
+    let rs;
+    if (isToday) {
+      const byH = new Map((D.heures || []).filter((r) => (r.groupe || 'Tous') === st.role).map((r) => [+r.heure, r]));
+      rs = d3.range(24).map((h) => ({ ...(byH.get(h) || { revive: 0, revivezone: 0, spawn: 0 }), semaine: String(h), lab: String(h).padStart(2, '0') + 'h', title: String(h).padStart(2, '0') + 'h00 - ' + String(h).padStart(2, '0') + 'h59' }));
+    } else {
+      rs = all.filter((r) => !days || r.date.getTime() + 7 * 864e5 > fin - days * 864e5).map((r) => ({ ...r, lab: fmt(r.date), title: 'Semaine du ' + fmt(r.date) }));
+    }
+    document.querySelector('.chartcard h2').firstChild.textContent = isToday ? 'Évolution par heure ' : 'Évolution par semaine ';
+    $('#wk-sub').textContent = isToday ? "aujourd'hui, heure française" : PHRASE[st.per];
     const keys = ['revive', 'revivezone', 'spawn'];
     const W = Math.max(box.clientWidth, 280), H = 240, mb = 26;
     box.replaceChildren();
@@ -416,27 +431,31 @@
     const y = d3.scaleLinear([0, ymax], [H - mb, 12]).nice();
     const ticks = y.ticks(4);
     const ml = 40, mr = 4;
-    const x = d3.scaleBand(rs.map((r) => r.semaine), [ml, W - mr]).paddingInner(rs.length > 4 ? .28 : .5).paddingOuter(.1);
+    const x = d3.scaleBand(rs.map((r) => r.semaine), [ml, W - mr]).paddingInner(rs.length > 12 ? .18 : rs.length > 4 ? .28 : .5).paddingOuter(.1);
     svg.append('g').selectAll('line').data(ticks).join('line').attr('x1', ml).attr('x2', W - mr).attr('y1', y).attr('y2', y).attr('stroke', 'rgba(255,255,255,.06)');
     svg.append('g').selectAll('text').data(ticks).join('text').attr('x', ml - 10).attr('y', (v) => y(v) + 4).attr('text-anchor', 'end').attr('fill', '#5e5e66').attr('font-size', 11).text((v) => F(v));
-    const bw = Math.min(26, x.bandwidth() / 3 - 3);
+    const bw = Math.max(2, Math.min(26, x.bandwidth() / 3 - (rs.length > 12 ? 1 : 3)));
     const gap = (x.bandwidth() - bw * 3) / 2;
-    const fmt = d3.utcFormat('%d/%m');
     const g = svg.append('g').selectAll('g').data(rs).join('g').attr('transform', (r) => `translate(${x(r.semaine)},0)`);
     keys.forEach((k, i) => {
       g.append('rect').attr('x', i * (bw + gap / 1.5) + (x.bandwidth() - (3 * bw + 2 * gap / 1.5)) / 2).attr('width', bw)
         .attr('y', (r) => y(+r[k])).attr('height', (r) => Math.max(0, y(0) - y(+r[k]))).attr('rx', Math.min(5, bw / 2)).attr('fill', `url(#g-${k})`);
     });
-    svg.append('g').selectAll('text').data(rs).join('text').attr('x', (r) => x(r.semaine) + x.bandwidth() / 2).attr('y', H - 6).attr('text-anchor', 'middle').attr('fill', '#8b8b94').attr('font-size', 11.5).text((r) => fmt(r.date));
+    const every = Math.max(1, Math.ceil(rs.length / Math.max(1, Math.floor((W - ml) / 46))));
+    svg.append('g').selectAll('text').data(rs.filter((_, i) => i % every === 0)).join('text').attr('x', (r) => x(r.semaine) + x.bandwidth() / 2).attr('y', H - 6).attr('text-anchor', 'middle').attr('fill', '#8b8b94').attr('font-size', 11.5).text((r) => r.lab);
     const t = tip(box);
     svg.append('g').selectAll('rect').data(rs).join('rect').attr('x', (r) => x(r.semaine)).attr('width', x.bandwidth()).attr('y', 0).attr('height', H - mb).attr('fill', 'transparent')
-      .on('mousemove', (ev, r) => { const [mx, my] = d3.pointer(ev, box); showTip(box, t, mx, my, 'Semaine du ' + fmt(r.date), keys.map((k) => [PAL[k], NAMES[k], F(r[k])])); })
+      .on('mousemove', (ev, r) => { const [mx, my] = d3.pointer(ev, box); showTip(box, t, mx, my, r.title, keys.map((k) => [PAL[k], NAMES[k], F(r[k])])); })
       .on('mouseleave', () => { t.style.display = 'none'; });
 
     $('#big-rev').replaceChildren(document.createTextNode(F(sum(rows(), 'revive'))), el('small', null, '/revive'));
     const complete = all.filter((r) => r.date.getTime() + 7 * 864e5 <= fin);
     const dl = $('#delta'); dl.replaceChildren();
-    if (complete.length >= 2) {
+    if (isToday) {
+      const pk = rs.reduce((a, b) => (+b.revive > +a.revive ? b : a), rs[0]);
+      if (+pk.revive > 0) dl.append(el('b', '', pk.lab), document.createTextNode("heure avec le plus de /revive aujourd'hui"));
+      else dl.append(document.createTextNode("Aucun /revive aujourd'hui pour l'instant"));
+    } else if (complete.length >= 2) {
       const a = +complete[complete.length - 1].revive, b = +complete[complete.length - 2].revive;
       if (b > 0) { const pct = Math.round((a - b) / b * 100); const tag = el('b', pct < 0 ? 'dn' : '', (pct >= 0 ? '↑ ' : '↓ ') + Math.abs(pct) + '%'); dl.append(tag, document.createTextNode('/revive, dernière semaine vs précédente')); }
     }
@@ -476,7 +495,7 @@
   }
 
   function spot() {
-    const top = rows().map((r) => ({ ...r, perte: loss(r) })).sort((a, b) => b.revive - a.revive)[0];
+    const top = rows().map((r) => ({ ...r, perte: loss(r) })).sort((a, b) => b.revive - a.revive || b.perte - a.perte)[0];
     if (!top) return;
     $('#spot-av').textContent = initials(top.pseudo);
     const h = $('#spot-name'); h.replaceChildren(document.createTextNode(top.pseudo + ' '), el('span', null, '@' + top.compte));
@@ -506,7 +525,7 @@
   }
 
   function modal() {
-    $('#m-tiles').replaceChildren(...['7 jours', '30 jours', '3 mois'].map((p) => {
+    $('#m-tiles').replaceChildren(...PERS.map((p) => {
       const rs = rows(p); const rev = sum(rs, 'revive'), heal = sum(rs, 'heal');
       const t = el('div', 'mtile'); t.setAttribute('aria-current', String(p === st.per));
       const v = el('div', 'v'); v.append(document.createTextNode(F(rev * 3500 + heal * 1200)), el('span', null, '$'));
@@ -543,9 +562,9 @@
   let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (D) { weekly(); zones(); } }, 150); });
 
   (async () => {
-    const files = { streamers: 'streamers.json', semaines: 'semaines.json', zones: 'zones_periodes.json', extraction: 'extraction.json' };
+    const files = { streamers: 'streamers.json', semaines: 'semaines.json', zones: 'zones_periodes.json', extraction: 'extraction.json', heures: 'heures.json' };
     D = {};
-    await Promise.all(Object.entries(files).map(async ([k, f]) => { D[k] = await fetch('data/' + f + '?v=' + Date.now(), { cache: 'no-store' }).then((r) => r.json()); }));
+    await Promise.all(Object.entries(files).map(async ([k, f]) => { D[k] = await fetch('data/' + f + '?v=' + Date.now(), { cache: 'no-store' }).then((r) => (r.ok ? r.json() : [])).catch(() => []); }));
     D.streamers.forEach((r) => { for (const c of CATS) r[c] = Number(r[c]) || 0; r.role = r.role || 'Streamer'; });
     $('#maj').textContent = D.extraction[0]?.extrait_texte || '—';
     render();
